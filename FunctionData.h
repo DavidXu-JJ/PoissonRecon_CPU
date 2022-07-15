@@ -32,7 +32,6 @@ DAMAGE.
 
 #include "PPolynomial.h"
 #include "BinaryNode.h"
-#include "SubdivideNode.h"
 
 template<class Real>
 class FunctionValueTable{

@@ -68,6 +68,8 @@ public:
     static void FactorCornerIndex	(const int& idx,int& x,int& y,int& z);
     static int  EdgeIndex			(const int& orientation,const int& i,const int& j);
     static void FactorEdgeIndex		(const int& idx,int& orientation,int& i,int &j);
+    /**     dir means direction, range from [0,2],
+     *      offSet range from [0,1]                         */
     static int  FaceIndex			(const int& dir,const int& offSet);
     static int  FaceIndex			(const int& x,const int& y,const int& z);
     static void FactorFaceIndex		(const int& idx,int& x,int &y,int& z);
@@ -117,8 +119,7 @@ class MarchingCubes{
      */
     static void SetVertex(const int& e,const double values[Cube::CORNERS],const double& iso);
     /**     given the face id you want to check,
-     *      return the corner key on this face
-     */
+     *      return the corner key on this face          */
     static int GetFaceIndex(const double values[Cube::CORNERS],const double& iso,const int& faceIndex);
 
     static float Interpolate(const float& v1,const float& v2);

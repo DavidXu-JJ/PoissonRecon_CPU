@@ -58,6 +58,20 @@ public:
 
 class OctNode
 {
+private:
+
+    /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
+     *      no new node will be created,
+     *      return the nearest node along $dir and $off direction       */
+    const OctNode* __faceNeighbor(const int& dir,const int& off) const;
+    OctNode* __faceNeighbor(const int&dir, const int& off,const int& forceChildren);
+
+    /**     $o denotes the orientation, $i denotes the coordinate in other two dims,
+     *      $idx denotes the index of other two dims/direction,
+     *      return the node has the same edge denote by the params with &this node  */
+    const OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2]) const;
+    OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2],const int& forceChildren);
+
 public:
     // use to encode the offset and depth
     static const int DepthShift, OffsetShift, OffsetShift1, OffsetShift2, OffsetShift3;

@@ -60,8 +60,109 @@ NodeData::NodeData(void)
 
 NodeData::~NodeData() {}
 
-// OctNode
+// OctNode private member
 
+const OctNode* OctNode::__faceNeighbor(const int& dir,const int& off) const{
+    if(!parent) return NULL;    // there is no neighbor outside this node
+    int pIndex=int(this-parent->children);  //get its children index
+    pIndex^=(1<<dir);    // reverse the bit in direction bit to get neighbor's right index in its sibling
+    if( (pIndex & (1<<dir) ) == (off<<dir) )
+        return &parent->children[pIndex];
+    const OctNode* temp=parent->__faceNeighbor(dir,off);
+    if(!temp || !temp->children)
+        return temp;
+    return &temp->children[pIndex];
+}
+
+OctNode* OctNode::__faceNeighbor(const int&dir, const int& off,const int& forceChildren) {
+    if(!parent) return NULL;
+    int pIndex=int(this-parent->children);
+    pIndex^=(1<<dir);
+    if( (pIndex & (1<<dir) ) == (off<<dir) )
+        return &parent->children[pIndex];
+    OctNode* temp=parent->__faceNeighbor(dir,off,forceChildren);
+    if(!temp) return NULL;
+    if(!temp->children){
+        if(forceChildren) temp->initChildren();
+        else return temp;
+    }
+    return &temp->children[pIndex];
+}
+
+
+const OctNode* OctNode::__edgeNeighbor(const int& o,const int i[2],const int idx[2]) const {
+    if(!parent) return NULL;
+    int pIndex=int(this-parent->children);
+    int aIndex,x[DIMENSION];
+
+    Cube::FactorCornerIndex(pIndex,x[0],x[1],x[2]);
+    /**     the first bit of aIndex denotes x coords ^ */
+    aIndex=( ~( (i[0] ^ x[idx[0]]) | ( (i[1] ^ x[idx[1]] ) << 1 ) )  ) & 3;
+    pIndex^=(7 ^ (1<<o));
+
+    /**     get the edge neighbor from the parent's face adjacent neighbor  */
+    if(aIndex==1){
+        const OctNode* temp=parent->__faceNeighbor(idx[0],i[0]);
+        if(!temp || !temp->children) return NULL;
+        else return &temp->children[pIndex];
+    }
+    if(aIndex==2){
+        const OctNode* temp=parent->__faceNeighbor(idx[1],i[1]);
+        if(!temp || !temp->children) return NULL;
+        else return &temp->children[pIndex];
+    }
+    /**     get the edge neighbor from the parent   */
+    if(aIndex==0){
+        return &parent->children[pIndex];
+    }
+    /**     get the edge neighbor from the parent's edge adjacent neighbor  */
+    if(aIndex==3){
+        const OctNode* temp= parent->__edgeNeighbor(o,i,idx);
+        if(!temp || !temp->children) return temp;
+        return &temp->children[pIndex];
+    }
+    return NULL;
+}
+OctNode* OctNode::__edgeNeighbor(const int& o,const int i[2],const int idx[2],const int& forceChildren) {
+    if(!parent) return NULL;
+    int pIndex=int(this-parent->children);
+    int aIndex,x[DIMENSION];
+
+    Cube::FactorCornerIndex(pIndex,x[0],x[1],x[2]);
+    aIndex=( ~( (i[0] ^ x[idx[0]]) | ( (i[1] ^ x[idx[1]] ) << 1 ) )  ) & 3;
+    pIndex^=(7 ^ (1<<o));
+
+    /**     get the edge neighbor from the parent's face adjacent neighbor  */
+    if(aIndex==1){
+        OctNode* temp=parent->__faceNeighbor(idx[0],i[0],0);
+        if(!temp || !temp->children) return NULL;
+        else return &temp->children[pIndex];
+    }
+    if(aIndex==2){
+        OctNode* temp=parent->__faceNeighbor(idx[1],i[1],0);
+        if(!temp || !temp->children) return NULL;
+        else return &temp->children[pIndex];
+    }
+    /**     get the edge neighbor from the parent   */
+    if(aIndex==0){
+        return &parent->children[pIndex];
+    }
+    /**     get the edge neighbor from the parent's edge adjacent neighbor  */
+    if(aIndex==3){
+        OctNode* temp= parent->__edgeNeighbor(o,i,idx,forceChildren);
+        if(!temp) return NULL;
+        if(!temp->children) {
+            if(forceChildren) temp->initChildren();
+            else return temp;
+        }
+        return &temp->children[pIndex];
+    }
+    return NULL;
+
+}
+
+
+// OctNode public member
 const int OctNode::DepthShift=5;
 const int OctNode::OffsetShift=19;
 const int OctNode::OffsetShift1=OffsetShift;

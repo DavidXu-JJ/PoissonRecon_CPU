@@ -175,6 +175,16 @@ public:
      *      (don't need to intersect)                                   */
     static bool CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode* node2, const int& eIndex2);
 
+    /**     pointer v1 and v2 is actually the pointer of pointer of OctNode
+     *      (OctNode ** v1, OctNode ** v2).
+     *      smaller depth will be sorted at front,
+     *      greater depth will be sorted at back.                       */
+    static int CompareForwardPointerDepths(const void* v1, const void* v2);
+    /**     pointer v1 and v2 is actually the pointer of pointer of OctNode
+     *      (OctNode ** v1, OctNode ** v2).
+     *      greater depth will be sorted at front,
+     *      smaller depth will be sorted at back.                       */
+    static int CompareBackwardPointerDepths(const void* v1, const void* v2);
 
     class Neighbors{
     public:

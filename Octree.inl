@@ -660,6 +660,24 @@ bool OctNode::CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode
     return false;
 }
 
+int OctNode::CompareForwardPointerDepths(const void* v1,const void* v2){
+    const OctNode *n1,*n2;
+    n1=(*(const OctNode**)v1);
+    n2=(*(const OctNode**)v2);
+    if(n1->d!=n2->d){return int(n1->d)-int(n2->d);}
+    while(n1->parent != n2->parent){
+        n1=n1->parent;
+        n2=n2->parent;
+    }
+    if(n1->off[0]!=n2->off[0]){return int(n1->off[0])-int(n2->off[0]);}
+    if(n1->off[1]!=n2->off[1]){return int(n1->off[1])-int(n2->off[1]);}
+    return int(n1->off[2])-int(n2->off[2]);
+}
+
+int OctNode::CompareBackwardPointerDepths(const void* v1,const void* v2){
+    return (*(const OctNode**)v2)->depth()-(*(const OctNode**)v1)->depth();
+}
+
 // OctNode::Neighbors
 OctNode::Neighbors::Neighbors(void) {
     clear();

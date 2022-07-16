@@ -76,9 +76,9 @@ private:
 
     /**     if distance between $center1 and $center2 on every dimension is smaller than $dWidth,
      *      they are determined as overlap each other.                              */
-    static inline int Overlap(const Point3D<float>& center1, const Point3D<float>& center2,const float& dWidth);
+    static inline bool Overlap(const Point3D<float>& center1, const Point3D<float>& center2,const float& dWidth);
     /**     another point can be seen as (0,0,0)                                    */
-    static inline int Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth);
+    static inline bool Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth);
 
 
 public:
@@ -103,7 +103,7 @@ public:
     OctNode(void);
     ~OctNode(void);
 
-    int initChildren(void);
+    bool initChildren(void);
     inline int depth(void) const;
     inline Point3D<float> center(void) const;
     inline float width(void) const;
@@ -148,10 +148,10 @@ public:
 
     const OctNode* root(void) const;
 
-    int write(const char* fileName) const;
-    int write(FILE* fp) const;
-    int read(const char* fileName);
-    int read(FILE* fp);
+    bool write(const char* fileName) const;
+    bool write(FILE* fp) const;
+    bool read(const char* fileName);
+    bool read(FILE* fp);
 
     OctNode& operator = (const OctNode& node);
 
@@ -170,6 +170,10 @@ public:
     /**     return the nearest leaf node address to $p in &this subtree */
     const OctNode* getNearestLeaf(const Point3D<float>& p) const;
     OctNode* getNearestLeaf(const Point3D<float>& p) ;
+
+    /**     check whether the $eIndex1 edge in $node1 and the $eIndex2 edge in $node2 are on the same line
+     *      (don't need to intersect)                                   */
+    static bool CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode* node2, const int& eIndex2);
 
 
     class Neighbors{

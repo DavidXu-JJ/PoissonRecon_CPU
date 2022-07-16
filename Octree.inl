@@ -161,13 +161,15 @@ OctNode* OctNode::__edgeNeighbor(const int& o,const int i[2],const int idx[2],co
 
 }
 
-inline int OctNode::Overlap(const Point3D<float>& c1, const Point3D<float>& c2,const float& dWidth) {
-    if(fabs(c1.coords[0]-c2.coords[0])>=dWidth || fabs(c1.coords[1]-c2.coords[1])>=dWidth || fabs(c1.coords[2]-c2.coords[2])>=dWidth){return 0;}
-    else{return 1;}
+inline bool OctNode::Overlap(const Point3D<float>& c1, const Point3D<float>& c2,const float& dWidth) {
+    if(fabs(c1.coords[0]-c2.coords[0])>=dWidth || fabs(c1.coords[1]-c2.coords[1])>=dWidth || fabs(c1.coords[2]-c2.coords[2])>=dWidth)
+        return false;
+    return true;
 }
-inline int OctNode::Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth) {
-    if(c1>=dWidth || c1<=-dWidth || c2>=dWidth || c2<=-dWidth || c3>=dWidth || c3<=-dWidth){return 0;}
-    else{return 1;}
+inline bool OctNode::Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth) {
+    if(c1>=dWidth || c1<=-dWidth || c2>=dWidth || c2<=-dWidth || c3>=dWidth || c3<=-dWidth)
+        return false;
+    return true;
 }
 
 
@@ -210,7 +212,7 @@ OctNode::~OctNode() {
     parent=children=NULL;
 }
 
-int OctNode::initChildren() {
+bool OctNode::initChildren() {
     int i,j,k;
     if(children) delete [] children;
     children=NULL;
@@ -237,7 +239,7 @@ int OctNode::initChildren() {
             }
         }
     }
-    return 1;
+    return true;
 }
 
 inline int OctNode::depth(void) const {
@@ -388,33 +390,33 @@ const OctNode* OctNode::root(void) const {
     return temp;
 }
 
-int OctNode::write(const char* fileName) const {
+bool OctNode::write(const char* fileName) const {
     FILE* fp=fopen(fileName,"wb");
-    if(!fp) return 0;
-    int ret=write(fp);
+    if(!fp) return false;
+    bool ret=write(fp);
     fclose(fp);
     return ret;
 }
 
-int OctNode::write(FILE* fp) const {
+bool OctNode::write(FILE* fp) const {
     fwrite(this,sizeof(OctNode),1,fp);
     if(children){
         for(int i=0;i<Cube::CORNERS;++i){
             children[i].write(fp);
         }
     }
-    return 1;
+    return true;
 }
 
-int OctNode::read(const char* fileName) {
+bool OctNode::read(const char* fileName) {
     FILE* fp=fopen(fileName,"rb");
-    if(!fp) return 0;
-    int ret=read(fp);
+    if(!fp) return false;
+    bool ret=read(fp);
     fclose(fp);
     return ret;
 }
 
-int OctNode::read(FILE* fp) {
+bool OctNode::read(FILE* fp) {
     fread(this,sizeof(OctNode),1,fp);
     parent=NULL;
     if(children){
@@ -425,7 +427,7 @@ int OctNode::read(FILE* fp) {
             children[i].parent=this;
         }
     }
-    return 1;
+    return true;
 }
 
 OctNode& OctNode::operator = (const OctNode& node){
@@ -617,6 +619,45 @@ OctNode* OctNode::getNearestLeaf(const Point3D<float>& p) {
         else         center.coords[2]-=width/2;
     }
     return temp;
+}
+
+bool OctNode::CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode* node2, const int& eIndex2) {
+    int o1,o2,i1,i2,j1,j2;
+
+    Cube::FactorEdgeIndex(eIndex1,o1,i1,j1);
+    Cube::FactorEdgeIndex(eIndex2,o2,i2,j2);
+    if(o1!=o2) return 0;
+
+    int dir[2];
+    switch (o1) {
+        case 0: dir[0]=1;   dir[1]=2;   break;
+        case 1: dir[0]=0;   dir[1]=2;   break;
+        case 2: dir[0]=0;   dir[1]=1;   break;
+    }
+    int d1,d2,off1[3],off2[3];
+    node1->depthAndOffset(d1,off1);
+    node2->depthAndOffset(d2,off2);
+
+    /**     conclude from the calculating process of OctNode::off[3]    */
+    int idx1[2],idx2[2];
+    idx1[0]=off1[dir[0]]+(1<<d1)+i1;
+    idx1[1]=off1[dir[1]]+(1<<d1)+j1;
+
+    idx2[0]=off2[dir[0]]+(1<<d2)+i2;
+    idx2[1]=off2[dir[1]]+(1<<d2)+j2;
+
+    if(d1>d2){
+        for(int & i : idx2){
+            i<<=(d1-d2);
+        }
+    }else{
+        for(int & i : idx1){
+            i<<=(d2-d1);
+        }
+    }
+    if(idx1[0]==idx2[0] && idx1[1]==idx2[1])
+        return true;
+    return false;
 }
 
 // OctNode::Neighbors

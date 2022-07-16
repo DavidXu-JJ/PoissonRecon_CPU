@@ -62,13 +62,15 @@ private:
 
     /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
      *      no new node will be created,
-     *      return the nearest node along $dir and $off direction       */
+     *      return the nearest node along $dir and $off direction.
+     *      Depth of the return node may not be the same as &this node.             */
     const OctNode* __faceNeighbor(const int& dir,const int& off) const;
     OctNode* __faceNeighbor(const int&dir, const int& off,const int& forceChildren);
 
     /**     $o denotes the orientation, $i denotes the coordinate in other two dims,
      *      $idx denotes the index of other two dims/direction,
-     *      return the node has the same edge denote by the params with &this node  */
+     *      return the node has the same edge denote by the params with &this node.
+     *      Depth of the return node may not be the same as &this node.             */
     const OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2]) const;
     OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2],const int& forceChildren);
 
@@ -96,6 +98,8 @@ public:
 
     int initChildren(void);
     inline int depth(void) const;
+    inline Point3D<float> center(void) const;
+    inline float width(void) const;
 
     inline void depthAndOffset(int& depth,int offset[3]) const;
     inline void centerAndWidth(Point3D<float>& center, float& width) const;
@@ -144,6 +148,9 @@ public:
 
     OctNode& operator = (const OctNode& node);
 
+    /**     return the nearest corner index in a node center at $center */
+    static int CornerIndex(const Point3D<float>& center,const Point3D<float>& p);
+
     const OctNode* faceNeighbor(const int& faceIndex) const;
     OctNode* faceNeighbor(const int& faceIndex, const int& forceChildren=0);
 
@@ -152,6 +159,10 @@ public:
 
     const OctNode* cornerNeighbor(const int& cornerIndex) const;
     OctNode* cornerNeighbor(const int& cornerIndex,const int& forceChildren=0);
+
+    /**     return the nearest leaf node address to $p in &this subtree */
+    const OctNode* getNearestLeaf(const Point3D<float>& p) const;
+    OctNode* getNearestLeaf(const Point3D<float>& p) ;
 
 
     class Neighbors{

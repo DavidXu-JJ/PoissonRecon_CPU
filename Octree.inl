@@ -235,6 +235,24 @@ inline int OctNode::depth(void) const {
     return d;
 }
 
+inline Point3D<float> OctNode::center(void) const {
+    Point3D<float> center;
+    int depth,offset[3];
+    depth=d;
+    for(int i=0;i<DIMENSION;++i){
+        offset[i]=(off[i]+1)&(~(1<<depth));
+    }
+    float width=float(1.0/(1<<depth));
+    for(int dim=0;dim<DIMENSION;++dim){
+        center.coords[dim]=float(0.5+offset[dim])*width;
+    }
+    return center;
+}
+
+inline float OctNode::width(void) const {
+    return float(1.0/(1<<d));
+}
+
 inline void OctNode::depthAndOffset(int &depth, int offset[3]) const {
     depth=int(d);
     for(int i=0;i<DIMENSION;++i){
@@ -417,6 +435,14 @@ OctNode& OctNode::operator = (const OctNode& node){
     return *this;
 }
 
+int OctNode::CornerIndex(const Point3D<float>& center,const Point3D<float>& p) {
+    int cIndex=0;
+    if(p.coords[0]>center.coords[0]) cIndex|=1;
+    if(p.coords[1]>center.coords[1]) cIndex|=2;
+    if(p.coords[2]>center.coords[2]) cIndex|=4;
+    return cIndex;
+}
+
 const OctNode* OctNode::faceNeighbor(const int& faceIndex) const{
     return __faceNeighbor(faceIndex>>1,faceIndex&1);
 }
@@ -546,6 +572,42 @@ OctNode* OctNode::cornerNeighbor(const int& cornerIndex,const int& forceChildren
         else{return & temp->children[pIndex];}
     }
     return NULL;
+}
+
+
+const OctNode* OctNode::getNearestLeaf(const Point3D<float>& p) const {
+    int nearest;
+    float temp,dist2;
+    if(!children) return this;
+    for(int i=0;i<Cube::CORNERS;++i){
+        temp=SquareDistance(children[i].center(),p);
+        if(!i || temp<dist2){
+            dist2=temp;
+            nearest=i;
+        }
+    }
+    return children[nearest].getNearestLeaf(p);
+}
+
+OctNode* OctNode::getNearestLeaf(const Point3D<float>& p) {
+    Point3D<float> center;
+    float width;
+    int cIndex;
+    if(!children) return this;
+    centerAndWidth(center,width);
+    OctNode* temp=this;
+    while(temp->children){
+        cIndex=CornerIndex(center,p);
+        temp=&temp->children[cIndex];
+        width/=2;
+        if(cIndex&1) center.coords[0]+=width/2;
+        else         center.coords[0]-=width/2;
+        if(cIndex&2) center.coords[1]+=width/2;
+        else         center.coords[1]-=width/2;
+        if(cIndex&4) center.coords[2]+=width/2;
+        else         center.coords[2]-=width/2;
+    }
+    return temp;
 }
 
 // OctNode::Neighbors

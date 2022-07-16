@@ -144,6 +144,15 @@ public:
 
     OctNode& operator = (const OctNode& node);
 
+    const OctNode* faceNeighbor(const int& faceIndex) const;
+    OctNode* faceNeighbor(const int& faceIndex, const int& forceChildren=0);
+
+    const OctNode* edgeNeighbor(const int& edgeIndex) const;
+    OctNode* edgeNeighbor(const int& edgeIndex,const int& forceChildren=0);
+
+    const OctNode* cornerNeighbor(const int& cornerIndex) const;
+    OctNode* cornerNeighbor(const int& cornerIndex,const int& forceChildren=0);
+
 
     class Neighbors{
     public:

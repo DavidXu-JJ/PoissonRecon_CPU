@@ -417,6 +417,137 @@ OctNode& OctNode::operator = (const OctNode& node){
     return *this;
 }
 
+const OctNode* OctNode::faceNeighbor(const int& faceIndex) const{
+    return __faceNeighbor(faceIndex>>1,faceIndex&1);
+}
+
+OctNode* OctNode::faceNeighbor(const int& faceIndex, const int& forceChildren) {
+    return __faceNeighbor(faceIndex>>1,faceIndex&1,forceChildren);
+}
+
+const OctNode* OctNode::edgeNeighbor(const int& edgeIndex) const{
+    int idx[2],o,i[2];
+    Cube::FactorEdgeIndex(edgeIndex,o,i[0],i[1]);
+    switch (o) {
+        case 0: idx[0]=1;   idx[1]=2;   break;
+        case 1: idx[0]=0;   idx[1]=2;   break;
+        case 2: idx[0]=0;   idx[1]=1;   break;
+    }
+    return __edgeNeighbor(o,i,idx);
+}
+
+OctNode* OctNode::edgeNeighbor(const int& edgeIndex,const int& forceChildren) {
+    int idx[2],o,i[2];
+    Cube::FactorEdgeIndex(edgeIndex,o,i[0],i[1]);
+    switch (o) {
+        case 0: idx[0]=1;   idx[1]=2;   break;
+        case 1: idx[0]=0;   idx[1]=2;   break;
+        case 2: idx[0]=0;   idx[1]=1;   break;
+    }
+    return __edgeNeighbor(o,i,idx,forceChildren);
+}
+
+
+const OctNode* OctNode::cornerNeighbor(const int& cornerIndex) const {
+    int pIndex,aIndex=0;
+    if(!parent){return NULL;}
+
+    pIndex=int(this-parent->children);
+    aIndex=(cornerIndex ^ pIndex);	// The disagreement bits
+    pIndex=(~pIndex)&7;				// The antipodal point
+    if(aIndex==7){					// Agree on no bits
+        return &parent->children[pIndex];
+    }
+    else if(aIndex==0){				// Agree on all bits
+        const OctNode* temp=((const OctNode*)parent)->cornerNeighbor(cornerIndex);
+        if(!temp || !temp->children){return temp;}
+        else{return &temp->children[pIndex];}
+    }
+    else if(aIndex==6){				// Agree on face 0
+        const OctNode* temp=((const OctNode*)parent)->__faceNeighbor(0,cornerIndex & 1);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==5){				// Agree on face 1
+        const OctNode* temp=((const OctNode*)parent)->__faceNeighbor(1,(cornerIndex & 2)>>1);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==3){				// Agree on face 2
+        const OctNode* temp=((const OctNode*)parent)->__faceNeighbor(2,(cornerIndex & 4)>>2);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==4){				// Agree on edge 2
+        const OctNode* temp=((const OctNode*)parent)->edgeNeighbor(8 | (cornerIndex & 1) | (cornerIndex & 2) );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==2){				// Agree on edge 1
+        const OctNode* temp=((const OctNode*)parent)->edgeNeighbor(4 | (cornerIndex & 1) | ((cornerIndex & 4)>>1) );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==1){				// Agree on edge 0
+        const OctNode* temp=((const OctNode*)parent)->edgeNeighbor(((cornerIndex & 2) | (cornerIndex & 4))>>1 );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    return NULL;
+}
+
+OctNode* OctNode::cornerNeighbor(const int& cornerIndex,const int& forceChildren) {
+    int pIndex,aIndex=0;
+    if(!parent){return NULL;}
+
+    pIndex=int(this-parent->children);
+    aIndex=(cornerIndex ^ pIndex);	// The disagreement bits
+    pIndex=(~pIndex)&7;				// The antipodal point
+    if(aIndex==7){					// Agree on no bits
+        return &parent->children[pIndex];
+    }
+    else if(aIndex==0){				// Agree on all bits
+        OctNode* temp=((OctNode*)parent)->cornerNeighbor(cornerIndex,forceChildren);
+        if(!temp){return NULL;}
+        if(!temp->children){
+            if(forceChildren){temp->initChildren();}
+            else{return temp;}
+        }
+        return &temp->children[pIndex];
+    }
+    else if(aIndex==6){				// Agree on face 0
+        OctNode* temp=((OctNode*)parent)->__faceNeighbor(0,cornerIndex & 1,0);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==5){				// Agree on face 1
+        OctNode* temp=((OctNode*)parent)->__faceNeighbor(1,(cornerIndex & 2)>>1,0);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==3){				// Agree on face 2
+        OctNode* temp=((OctNode*)parent)->__faceNeighbor(2,(cornerIndex & 4)>>2,0);
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==4){				// Agree on edge 2
+        OctNode* temp=((OctNode*)parent)->edgeNeighbor(8 | (cornerIndex & 1) | (cornerIndex & 2) );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==2){				// Agree on edge 1
+        OctNode* temp=((OctNode*)parent)->edgeNeighbor(4 | (cornerIndex & 1) | ((cornerIndex & 4)>>1) );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    else if(aIndex==1){				// Agree on edge 0
+        OctNode* temp=((OctNode*)parent)->edgeNeighbor(((cornerIndex & 2) | (cornerIndex & 4))>>1 );
+        if(!temp || !temp->children){return NULL;}
+        else{return & temp->children[pIndex];}
+    }
+    return NULL;
+}
+
 // OctNode::Neighbors
 OctNode::Neighbors::Neighbors(void) {
     clear();

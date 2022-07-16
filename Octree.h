@@ -74,6 +74,13 @@ private:
     const OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2]) const;
     OctNode* __edgeNeighbor(const int& o,const int i[2],const int idx[2],const int& forceChildren);
 
+    /**     if distance between $center1 and $center2 on every dimension is smaller than $dWidth,
+     *      they are determined as overlap each other.                              */
+    static inline int Overlap(const Point3D<float>& center1, const Point3D<float>& center2,const float& dWidth);
+    /**     another point can be seen as (0,0,0)                                    */
+    static inline int Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth);
+
+
 public:
     // use to encode the offset and depth
     static const int DepthShift, OffsetShift, OffsetShift1, OffsetShift2, OffsetShift3;

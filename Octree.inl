@@ -161,6 +161,15 @@ OctNode* OctNode::__edgeNeighbor(const int& o,const int i[2],const int idx[2],co
 
 }
 
+inline int OctNode::Overlap(const Point3D<float>& c1, const Point3D<float>& c2,const float& dWidth) {
+    if(fabs(c1.coords[0]-c2.coords[0])>=dWidth || fabs(c1.coords[1]-c2.coords[1])>=dWidth || fabs(c1.coords[2]-c2.coords[2])>=dWidth){return 0;}
+    else{return 1;}
+}
+inline int OctNode::Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth) {
+    if(c1>=dWidth || c1<=-dWidth || c2>=dWidth || c2<=-dWidth || c3>=dWidth || c3<=-dWidth){return 0;}
+    else{return 1;}
+}
+
 
 // OctNode public member
 const int OctNode::DepthShift=5;

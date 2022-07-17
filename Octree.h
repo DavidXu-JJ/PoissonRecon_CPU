@@ -100,8 +100,8 @@ public:
     /**     in Function *initChildren*:
      *      if the node at depth n,
      *      the $off will range in [2^n-1, 2^(n+1)-2].
-     *      $off value denotes the index in FunctionData's baseFunction
-     */
+     *      $off value denotes the index in FunctionData's baseFunction.
+     *      $off is global and offset get by *depthAndOffset* is regional on its depth  */
     int d,off[3];
     NodeData nodeData;
 

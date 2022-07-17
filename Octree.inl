@@ -62,6 +62,27 @@ NodeData::~NodeData() {}
 
 // OctNode private member
 
+template<class NodeAdjacencyFunction>
+void OctNode::__processNodeNodes(OctNode* node,NodeAdjacencyFunction* F) {
+    F->Function(&children[0],node);
+    F->Function(&children[1],node);
+    F->Function(&children[2],node);
+    F->Function(&children[3],node);
+    F->Function(&children[4],node);
+    F->Function(&children[5],node);
+    F->Function(&children[6],node);
+    F->Function(&children[7],node);
+    if(children[0].children){children[0].__processNodeNodes(node,F);}
+    if(children[1].children){children[1].__processNodeNodes(node,F);}
+    if(children[2].children){children[2].__processNodeNodes(node,F);}
+    if(children[3].children){children[3].__processNodeNodes(node,F);}
+    if(children[4].children){children[4].__processNodeNodes(node,F);}
+    if(children[5].children){children[5].__processNodeNodes(node,F);}
+    if(children[6].children){children[6].__processNodeNodes(node,F);}
+    if(children[7].children){children[7].__processNodeNodes(node,F);}
+}
+
+
 const OctNode* OctNode::__faceNeighbor(const int& dir,const int& off) const{
     if(!parent) return NULL;    // there is no neighbor outside this node
     int pIndex=int(this-parent->children);  //get its children index
@@ -382,6 +403,13 @@ void OctNode::setFullDepth(const int& maxDepth) {
             this->children[i].setFullDepth(maxDepth-1);
         }
     }
+}
+
+template<class NodeAdjacencyFunction>
+void OctNode::processNodeNodes(OctNode* node,NodeAdjacencyFunction* F,const int& processCurrent){
+    if(processCurrent){F->Function(this,node);}
+    if(!children){return;}
+    __processNodeNodes(node,F);
 }
 
 const OctNode* OctNode::root(void) const {

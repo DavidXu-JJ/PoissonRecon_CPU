@@ -60,6 +60,11 @@ class OctNode
 {
 private:
 
+    /**     implement F(children,$node) to all children,
+     *      except &this itself                             */
+    template<class NodeAdjacencyFunction>
+    void __processNodeNodes(OctNode* node,NodeAdjacencyFunction* F);
+
     /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
      *      no new node will be created,
      *      return the nearest node along $dir and $off direction.
@@ -145,6 +150,11 @@ public:
 
     /**     initialize a full subtree from &this node with depth $maxDepth  */
     void setFullDepth(const int& maxDepth);
+
+    /**     implement F(children,$node) to all children,
+     *      processCurrent decides where &this node is processed            */
+    template<class NodeAdjacencyFunction>
+    void processNodeNodes(OctNode* node, NodeAdjacencyFunction* F,const int& processCurrent=1);
 
     const OctNode* root(void) const;
 

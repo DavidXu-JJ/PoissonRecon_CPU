@@ -74,10 +74,10 @@ class Octree {
     */
 
 
-    /**     calculate the point $position contribution to node's neighbors  */
+    /**     calculate the point $position contribution to node's neighbors   */
     int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);
 
-    /**     get 1 / (sum of weight in $node's neighbors) of $position point */
+    /**     get 1 / (sum of weight in $node's neighbors) of $position point  */
     float NonLinearGetSampleWeight(OctNode* node, const Point3D<float>& position);
 
     void NonLinearGetSampleDepthAndWeight(OctNode* node, const Point3D<float>& position,
@@ -87,20 +87,23 @@ class Octree {
 
     /**     Update this->normals member,
      *      only update $node's neighbor node.
-     *      normals[neighbors->nodeData.nodeIndex] += $normal * weight     */
+     *      normals[neighbors->nodeData.nodeIndex] += $normal * weight      */
     int NonLinearSplatOrientedPoint(OctNode* node, const Point3D<float>& position, const Point3D<float>& normal);
 
     /**     Reach the kernelDepth node in &this tree which is nearest to $point.
      *      No new node is created.
      *      The node depth updated decided by $samplePerNode, $minDepth, $maxDepth,
      *      update neighbor node of the node at decided depth.
-     *      Update this->normals member.                                   */
+     *      Update this->normals member.                                    */
     void NonLinearSplatOrientedPoint(const Point3D<float>& point,
                                      const Point3D<float>& normal,
                                      const int& kernelDepth,
                                      const float& samplesPerNode,
                                      const int& minDepth,
                                      const int& maxDepth);
+
+    /**     Find whether there is valid normal in $node and its subnode     */
+    int HasNormals(OctNode* node,const float& epsilon);
 
 public:
     /**     normals[$node->nodeData.nodeIndex] denote the normal in $node   */
@@ -129,6 +132,10 @@ public:
                 Point3D<float>& center,
                 float& scale,
                 const int& resetSampleDepth=1);
+
+    /**     make the node pointer with no normal points to NULL
+     *      (the memory hasn't been released?)                  */
+    void ClipTree(void);
 
 };
 

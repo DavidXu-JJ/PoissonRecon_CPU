@@ -360,6 +360,20 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
     }
 }
 
+template<int Degree>
+int Octree<Degree>::HasNormals(OctNode *node, const float &epsilon) {
+    int hasNormals=0;
+    int& idx=node->nodeData.nodeIndex;
+    Point3D<float>& normal=(*normals)[idx];
+    if(idx >= 0 && Length(normal) > epsilon)
+        hasNormals=1;
+    if(node->children)
+        for(int i=0;i<Cube::CORNERS && !hasNormals; ++i){
+            hasNormals|=HasNormals(&node->children[i],epsilon);
+        }
+    return hasNormals;
+}
+
 // Octree public function
 template<int Degree>
 Octree<Degree>::Octree(void) {
@@ -568,3 +582,21 @@ int Octree<Degree>::setTree(char* fileName,
     fclose(fp);
     return cnt;
 }
+
+template<int Degree>
+void Octree<Degree>::ClipTree(void) {
+    OctNode* temp;
+    temp=tree.nextNode();
+    while(temp){
+        if(temp->children){
+            int hasNormals=0;
+            for(int i=0;i<Cube::CORNERS && !hasNormals;++i){
+                hasNormals=HasNormals(&temp->children[i],EPSILON);
+            }
+            if(!hasNormals)
+                temp->children=NULL;
+        }
+        temp=tree.nextNode(temp);
+    }
+}
+

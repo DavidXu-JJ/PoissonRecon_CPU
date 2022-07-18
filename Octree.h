@@ -65,6 +65,14 @@ private:
     template<class NodeAdjacencyFunction>
     void __processNodeNodes(OctNode* node,NodeAdjacencyFunction* F);
 
+
+    template<class NodeAdjacencyFunction>
+    static void __ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                   OctNode* node1, const float& radius1,
+                                                   OctNode* node2, const float& radius2, const float& cWidth2,
+                                                   const int& depth,
+                                                   NodeAdjacencyFunction* F);
+
     /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
      *      no new node will be created,
      *      return the nearest node along $dir and $off direction.
@@ -84,6 +92,10 @@ private:
     static inline bool Overlap(const Point3D<float>& center1, const Point3D<float>& center2,const float& dWidth);
     /**     another point can be seen as (0,0,0)                                    */
     static inline bool Overlap(const float& c1, const float& c2, const float& c3, const float& dWidth);
+
+    /**     return an encoded int,
+     *      contains information about point (dx, dy, dz) with cRadius2 in [-d, d]  */
+    inline static int ChildOverlap(const float& dx, const float& dy, const float& dz, const float& d, const float& cRadius2);
 
 
 public:
@@ -164,6 +176,22 @@ public:
     bool read(FILE* fp);
 
     OctNode& operator = (const OctNode& node);
+
+    template<class NodeAdjacencyFunction>
+    static void ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                 OctNode* node1, const float& radius1,
+                                                 OctNode* node2, const float& radius2, const float& width2,
+                                                 const int& depth,
+                                                 NodeAdjacencyFunction* F,
+                                                 const int& processCurrent=1);
+
+    template<class NodeAdjacencyFunction>
+    static void ProcessMaxDepthNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                                 OctNode* node2, const float& radius2,
+                                                 const int& depth,
+                                                 NodeAdjacencyFunction* F,
+                                                 const int& processCurrent=1);
+
 
     /**     return the nearest corner index in a node center at $center */
     static int CornerIndex(const Point3D<float>& center,const Point3D<float>& p);

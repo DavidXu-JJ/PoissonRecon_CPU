@@ -73,6 +73,14 @@ class Octree {
     };
     */
 
+    class RefineFunction{
+    public:
+        int depth;
+        /**     Call node1->initChildren if node1->depth()<this->depth,
+         *      $node2 doesn't matter   */
+        void Function(OctNode* node1,const OctNode* node2);
+    };
+
 
     /**     calculate the point $position contribution to node's neighbors   */
     int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);
@@ -114,7 +122,8 @@ public:
 
     Octree(void);
 
-    /**     set the fData of Octree     */
+    /**     set the this->fData of Octree,
+     *      set the this->radius = abs(fData.polys[0].start) = 1.5  */
     void setFunctionData(const PPolynomial<Degree>& ReconstructionFunction,
                          const int& maxDepth,
                          const int& normalize,
@@ -133,10 +142,14 @@ public:
                 float& scale,
                 const int& resetSampleDepth=1);
 
-    /**     make the node pointer with no normal points to NULL
-     *      (the memory hasn't been released?)                  */
+    /**     Make the node pointer with no normal points to NULL
+     *      (the memory hasn't been released?)                      */
     void ClipTree(void);
 
+    /**     For the node with valid normal,
+     *      call initChildren() to the node close to valid node
+     *      until depth >= ( valid node's depth - $refineNeighbors )     */
+    void finalize1(const int& refineNeighbors);
 };
 
 #include "MultiGridOctreeData.inl"

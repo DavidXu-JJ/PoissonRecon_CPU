@@ -117,6 +117,12 @@ int Octree<Degree>::LaplacianMatrixFunction::Function(OctNode *node1, OctNode *n
 */
 
 template<int Degree>
+void Octree<Degree>::RefineFunction::Function(OctNode* node1,const OctNode* node2){
+    if(!node1->children && node1->depth()<this->depth)
+        node1->initChildren();
+}
+
+template<int Degree>
 int Octree<Degree>::NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position) {
     int i,j,k;
     /**     Get the neighbor of $node,
@@ -600,3 +606,28 @@ void Octree<Degree>::ClipTree(void) {
     }
 }
 
+template<int Degree>
+void Octree<Degree>::finalize1(const int& refineNeighbors) {
+    OctNode* temp;
+
+    if(refineNeighbors >= 0){
+        RefineFunction rf;
+        temp=tree.nextNode();
+        while(temp){
+            int& idx=temp->nodeData.nodeIndex;
+            Point3D<float>& normal=(*normals)[idx];
+            /**     if current node is valid    */
+            if(idx>=0 && Length(normal) > EPSILON){
+                rf.depth=temp->depth()-refineNeighbors;
+                /**     node1:      temp
+                 *      radius1:    2*radius
+                 *      node2:      &tree
+                 *      radius2:    0.5
+                 *      depth:      rf.depth
+                 *      F:          rf           */
+                OctNode::ProcessMaxDepthNodeAdjacentNodes(temp,2*radius,&tree,float(0.5),temp->depth()-refineNeighbors,&rf);
+            }
+            temp=tree.nextNode(temp);
+        }
+    }
+}

@@ -83,6 +83,80 @@ void OctNode::__processNodeNodes(OctNode* node,NodeAdjacencyFunction* F) {
 }
 
 
+template<class NodeAdjacencyFunction>
+void OctNode::__ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                               OctNode* node1, const float& radius1,
+                                               OctNode* node2, const float& radius2, const float& cWidth2,
+                                               const int& depth,
+                                               NodeAdjacencyFunction* F)
+{
+    /**     $cWidth takes half of node2's radius because it's convenient to
+     *      move the center position to generate new (dx, dy, dz).
+     *      Another half of node2's radius is offset by $radius.
+     */
+    float cWidth=cWidth2/2;
+    float radius=radius2/2;
+
+    /**     (dx, dy, dz) is the vector(center1->center2)
+     *      radius1:    width of node1 * 3
+     *      radius:     radius of node2 / 2 = width of node2 / 4
+     *      cWidth:     radius of node2 / 2 = width of node2 / 4     */
+    int o=ChildOverlap(dx,dy,dz,radius1+radius,cWidth);
+    /**     Above function used to check which children of node2 is close enough to node1   */
+
+    if(o){
+        float dx1=dx-cWidth;
+        float dx2=dx+cWidth;
+        float dy1=dy-cWidth;
+        float dy2=dy+cWidth;
+        float dz1=dz-cWidth;
+        float dz2=dz+cWidth;
+        if(node2->depth()==depth){
+            if(o&  1)   F->Function(&node2->children[0],node1);
+            if(o&  2)   F->Function(&node2->children[1],node1);
+            if(o&  4)   F->Function(&node2->children[2],node1);
+            if(o&  8)   F->Function(&node2->children[3],node1);
+            if(o& 16)   F->Function(&node2->children[4],node1);
+            if(o& 32)   F->Function(&node2->children[5],node1);
+            if(o& 64)   F->Function(&node2->children[6],node1);
+            if(o&128)   F->Function(&node2->children[7],node1);
+        } else{
+            if(o&  1) if(node2->children[0].children)
+                __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,
+                                                   &node2->children[0],radius,cWidth,
+                                                   depth,F);
+            if(o&  2) if(node2->children[1].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy1,dz1,node1,radius1,
+                                                       &node2->children[1],radius,cWidth,
+                                                       depth,F);
+            if(o&  4) if(node2->children[2].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy2,dz1,node1,radius1,
+                                                       &node2->children[2],radius,cWidth,
+                                                       depth,F);
+            if(o&  8) if(node2->children[3].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy2,dz1,node1,radius1,
+                                                       &node2->children[3],radius,cWidth,
+                                                       depth,F);
+            if(o& 16) if(node2->children[4].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz2,node1,radius1,
+                                                       &node2->children[4],radius,cWidth,
+                                                       depth,F);
+            if(o& 32) if(node2->children[5].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy1,dz2,node1,radius1,
+                                                       &node2->children[5],radius,cWidth,
+                                                       depth,F);
+            if(o& 64) if(node2->children[6].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy2,dz2,node1,radius1,
+                                                       &node2->children[6],radius,cWidth,
+                                                       depth,F);
+            if(o&128) if(node2->children[7].children)
+                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy2,dz2,node1,radius1,
+                                                       &node2->children[7],radius,cWidth,
+                                                       depth,F);
+        }
+    }
+}
+
 const OctNode* OctNode::__faceNeighbor(const int& dir,const int& off) const{
     if(!parent) return NULL;    // there is no neighbor outside this node
     int pIndex=int(this-parent->children);  //get its children index
@@ -193,6 +267,33 @@ inline bool OctNode::Overlap(const float& c1, const float& c2, const float& c3, 
     return true;
 }
 
+
+inline int OctNode::ChildOverlap(const float& dx, const float& dy, const float& dz, const float& d, const float& cRadius2){
+    /**     w1:     width of node1 * 3
+     *      w2:     width of node1 * 3 + radius of node2    */
+    float w1=d-cRadius2;
+    float w2=d+cRadius2;
+    int overlap=0;
+
+    int test=0, test1=0;
+    /**     -d <(dx-cRadius2)<d     */
+    if(dx < w2 && dx > -w1) test =1;
+    /**     -d <(dx+cRadius2)<d     */
+    if(dx < w1 && dx > -w2) test|=2;
+
+    if(!test) return 0;
+    /**     -d <(dz-cRadius2)<d     */
+    if(dz < w2 && dx > -w1) test1 =test;
+    /**     -d <(dz+cRadius2)<d     */
+    if(dz < w1 && dz > -w2) test1|=test<<4;
+
+    if(!test1) return 0;
+    /**     -d <(dy-cRadius2)<d     */
+    if(dy < w2 && dy > -w1) overlap =test1;
+    /**     -d <(dy+cRadius2)<d     */
+    if(dy < w1 && dy > -w2) overlap|=test1<<2;
+    return overlap;
+}
 
 // OctNode public member
 const int OctNode::DepthShift=5;
@@ -472,6 +573,65 @@ OctNode& OctNode::operator = (const OctNode& node){
         }
     }
     return *this;
+}
+
+template<class NodeAdjacencyFunction>
+void OctNode::ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                               OctNode* node1, const float& radius1,
+                                               OctNode* node2, const float& radius2, const float& width2,
+                                               const int& depth,
+                                               NodeAdjacencyFunction* F,
+                                               const int& processCurrent)
+{
+    int d=node2->depth();
+    if(d > depth) return;
+
+    /**     radius1:    width of node1 * 3
+     *      radius2:    width of tree node2 * 0.5 = radius of node2
+     *      If c1 and c2 is not close enough, don't process.    */
+    if(!Overlap(dx,dy,dz,radius1+radius2))
+    /**      This return almost won't be triggered               */
+        return;
+
+
+    /**     if node2 is not deep enough,
+     *      then call initChildren()        */
+    if(processCurrent) F->Function(node2,node1);
+
+
+    /**     (-dx, -dy, -dz) is the vector(center1->center2)
+     *      radius1:    width of node1 * 3
+     *      radius2:    width of tree node2 * 0.5 = radius of node2
+     *      cWidth2:    radius of node2 = width of node2 / 2    */
+    if(d < depth && node2->children) __ProcessMaxDepthNodeAdjacentNodes(-dx,-dy,-dz,node1,radius1,node2,radius2,width2/2,depth-1,F);
+    /**     Because above function execute on node2's children, so depth need to minus 1    */
+}
+
+template<class NodeAdjacencyFunction>
+void OctNode::ProcessMaxDepthNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                               OctNode* node2, const float& radius2,
+                                               const int& depth,
+                                               NodeAdjacencyFunction* F,
+                                               const int& processCurrent)
+{
+    /**     radius1:    3.0
+     *      radius2:    0.5     */
+
+    Point3D<float> c1,c2;
+    float w1,w2;
+    node1->centerAndWidth(c1,w1);
+
+    /**     c2 is the &tree's center,
+     *      w2 is the width of [0, 1]^3 node = 1     */
+    node2->centerAndWidth(c2,w2);
+
+    /**     (dx, dy, dz) is the vector(center2->center1)    */
+    ProcessMaxDepthNodeAdjacentNodes(c1.coords[0]-c2.coords[0],
+                                     c1.coords[1]-c2.coords[1],
+                                     c1.coords[2]-c2.coords[2],
+                                     node1,radius1*w1,
+                                     node2,radius2*w2,w2,
+                                     depth,F,processCurrent);
 }
 
 int OctNode::CornerIndex(const Point3D<float>& center,const Point3D<float>& p) {

@@ -752,8 +752,7 @@ OctNode::Neighbors& OctNode::NeighborKey::setNeighbors(OctNode *node) {
                     for(k=0;k<2;++k){
                         /**     if i=x1, j=y1, k=z1,
                           *     x2+i=1, y2+j=1, z2+k=1
-                          *     set neighbors[1][1][1] to be itself
-                          */
+                          *     set neighbors[1][1][1] to be itself */
                         neighbors[d].neighbors[x2+i][y2+j][z2+k]=&node->parent->children[Cube::CornerIndex(i,j,k)];
                     }
                 }

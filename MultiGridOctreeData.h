@@ -74,9 +74,36 @@ class Octree {
     */
 
 
-    bool NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);
+    /**     calculate the point $position contribution to node's neighbors  */
+    int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);
+
+    /**     get 1 / (sum of weight in $node's neighbors) of $position point */
+    float NonLinearGetSampleWeight(OctNode* node, const Point3D<float>& position);
+
+    void NonLinearGetSampleDepthAndWeight(OctNode* node, const Point3D<float>& position,
+                                          const float& samplesPerNode,
+                                          float& depth,
+                                          float& weight);
+
+    /**     Update this->normals member,
+     *      only update $node's neighbor node.
+     *      normals[neighbors->nodeData.nodeIndex] += $normal * weight     */
+    int NonLinearSplatOrientedPoint(OctNode* node, const Point3D<float>& position, const Point3D<float>& normal);
+
+    /**     Reach the kernelDepth node in &this tree which is nearest to $point.
+     *      No new node is created.
+     *      The node depth updated decided by $samplePerNode, $minDepth, $maxDepth,
+     *      update neighbor node of the node at decided depth.
+     *      Update this->normals member.                                   */
+    void NonLinearSplatOrientedPoint(const Point3D<float>& point,
+                                     const Point3D<float>& normal,
+                                     const int& kernelDepth,
+                                     const float& samplesPerNode,
+                                     const int& minDepth,
+                                     const int& maxDepth);
 
 public:
+    /**     normals[$node->nodeData.nodeIndex] denote the normal in $node   */
     std::vector<Point3D<float> >*normals;
     float postNormalSmooth;
     OctNode tree;
@@ -89,6 +116,19 @@ public:
                          const int& maxDepth,
                          const int& normalize,
                          const float& normalSmooth=-1);
+
+    /**     Initialized the weight contribution of the node at each depth.
+     *      Finally use the normalized oriented point in file
+     *      to update this->normals of the node at kernelDepth.     */
+    int setTree(char* fileName,
+                const int& maxDepth,
+                const int& binary,
+                const int& kernelDepth,
+                const float& samplesPerNode,
+                const float& scaleFactor,
+                Point3D<float>& center,
+                float& scale,
+                const int& resetSampleDepth=1);
 
 };
 

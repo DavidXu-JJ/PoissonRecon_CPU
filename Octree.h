@@ -211,14 +211,14 @@ public:
         NeighborKey(void);
         ~NeighborKey(void);
 
-        /**     create $depth neighbors     */
+        /**     create $depth neighbors element in NeighborKey              */
         void set(const int& depth);
         /**     neighbors[node->depth()] will be set to be the neighbors of $node and finally return,
-         *      all element of neighbors[3][3][3] will be valid.             */
+         *      all element of neighbors[3][3][3] will be valid.            */
         Neighbors& setNeighbors(OctNode* node);
         /**     neighbors[node->depth()] will be set to be the neighbors of $node and finally return,
          *      not all element of neighbors[3][3][3] is valid,
-         *      this function won't init new children node                   */
+         *      this function won't init new children node                  */
         Neighbors& getNeighbors(OctNode* node);
     };
 

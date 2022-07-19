@@ -151,6 +151,10 @@ public:
      *      until depth >= ( valid node's depth - $refineNeighbors )     */
     void finalize1(const int& refineNeighbors);
 
+    /**     Use this->normals to update nodeData.value
+     *      with their contribution of divergence to related node.
+     *      Use this->normals to replace old $index node.nodeData.centerWeightContribution
+     *      with Length of this->normals[$index].(Will be used in getting isovalue)     */
     void SetLaplacianWeights(void);
 };
 

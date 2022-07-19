@@ -82,6 +82,12 @@ private:
                                                    const int& depth,
                                                    NodeAdjacencyFunction* F);
 
+    template<class NodeAdjacencyFunction>
+    static void __ProcessTerminatingNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                      OctNode* node1, const float& radius1,
+                                                      OctNode* node2, const float& radius2, const float& cWidth2,
+                                                      NodeAdjacencyFunction* F);
+
     /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
      *      no new node will be created,
      *      return the nearest node along $dir and $off direction.
@@ -213,6 +219,19 @@ public:
                                                  OctNode* node2, const float& radius2,
                                                  const int& depth,
                                                  NodeAdjacencyFunction* F,
+                                                 const int& processCurrent=1);
+
+    template<class TerminatingNodeAdjacencyFunction>
+    static void ProcessTerminatingNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                    OctNode* node1, const float& radius1,
+                                                    OctNode* node2, const float& radius2, const float& width2,
+                                                    TerminatingNodeAdjacencyFunction* F,
+                                                    const int& processCurrent=1);
+
+    template<class TerminatingNodeAdjacencyFunction>
+    static void ProcessTerminatingNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                                 OctNode* node2, const float& radius2,
+                                                 TerminatingNodeAdjacencyFunction* F,
                                                  const int& processCurrent=1);
 
 

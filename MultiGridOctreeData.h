@@ -14,12 +14,12 @@ class VertexData {
      *      then the resolution of valueTable is (1<<maxDepth+1).
      *      Return the index of $node's center in fData's valueTable.
      *      Value of this center is valueTable[node.off*res2+returnValue],
-     *      equals fData.baseFunctions[off](returnValue).
-     */
+     *      equals fData.baseFunctions[off](returnValue).           */
     static long long CenterIndex(const OctNode* node, const int& maxDepth, int index[DIMENSION]);
 };
 
 class SortedTreeNodes {
+public:
     /**     the array to save the pointer of OctNode                */
     OctNode** treeNodes;
     /**     record the starting address offset of each depth,
@@ -30,7 +30,7 @@ class SortedTreeNodes {
     SortedTreeNodes(void);
     ~SortedTreeNodes(void);
     /**     save all nodes in subtree from $root in &this object    */
-    void set(OctNode& root, const int& setIndex);
+    void set(OctNode& root, const bool& setIndex);
 };
 
 template<int Degree>
@@ -61,7 +61,6 @@ class Octree {
         void Function(OctNode* node1, OctNode* node2);
     };
 
-    /*
     class LaplacianMatrixFunction{
     public:
         int x2,y2,z2,d2;
@@ -71,8 +70,8 @@ class Octree {
         MatrixEntry<float>* rowElements;    // an array record Nth element's value
         int Function(OctNode* node1, OctNode* node2);
     };
-    */
 
+    /**     Use to create children node     */
     class RefineFunction{
     public:
         int depth;
@@ -80,6 +79,11 @@ class Octree {
          *      $node2 doesn't matter   */
         void Function(OctNode* node1,const OctNode* node2);
     };
+
+    int GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix, const int& depth, const SortedTreeNodes& sNodes);
+
+//    int SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes);
+//    int SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes);
 
 
     /**     calculate the point $position contribution to node's neighbors   */
@@ -159,6 +163,8 @@ public:
 
     /**     Similar to finalize1(), judge if the node is valid with divergence  */
     void finalize2(const int& refineNeighbors=-1);
+
+    int LaplacianMatrixIteration(const int& subdivideDepth);
 };
 
 #include "MultiGridOctreeData.inl"

@@ -4,6 +4,9 @@
 #define FORCE_UNIT_NORMALS 1
 #define USE_DOT_RATIOS 1
 
+#define MEMORY_ALLOCATOR_BLOCK_SIZE 1<<12
+#define ITERATION_POWER 1.0/3
+
 const float EPSILON=float(1e-6);
 const float ROUND_EPS=float(1e-5);
 
@@ -19,7 +22,7 @@ SortedTreeNodes::~SortedTreeNodes(void) {
     if(treeNodes) delete [] treeNodes;
 }
 
-void SortedTreeNodes::set(OctNode& root, const int& setIndex) {
+void SortedTreeNodes::set(OctNode& root, const bool& setIndex) {
     if(nodeCount) delete [] nodeCount;
     if(treeNodes) delete [] treeNodes;
 
@@ -85,6 +88,8 @@ float Octree<Degree>::GetDivergence(const int idx[DIMENSION],const Point3D<float
 #endif // !USE_DOT_RATIOS
 }
 
+
+// DivergenceFunction
 template<int Degree>
 void Octree<Degree>::DivergenceFunction::Function(OctNode *node1, OctNode *node2) {
     for(int i=0;i<3;++i)
@@ -95,14 +100,15 @@ void Octree<Degree>::DivergenceFunction::Function(OctNode *node1, OctNode *node2
     node1->nodeData.value+=ot->GetDivergence(scratch,normal);
 }
 
+// LaplacianProjectionFunction
 template<int Degree>
 void Octree<Degree>::LaplacianProjectionFunction::Function(OctNode *node1, OctNode *node2) {
     for(int i=0;i<3;++i)
         scratch[i]=index[i]+int(node1->off[i]);
+    /**     $scratch contains node1 and node2 index information     */
     node1->nodeData.value-=float(ot->GetLaplacian(scratch)*value);
 }
 
-/*
 template<int Degree>
 int Octree<Degree>::LaplacianMatrixFunction::Function(OctNode *node1, OctNode *node2) {
     float temp;
@@ -112,18 +118,131 @@ int Octree<Degree>::LaplacianMatrixFunction::Function(OctNode *node1, OctNode *n
     y1=int(node1->off[1]);
     z1=int(node1->off[2]);
 
+    /**     this->d2 is $depth in GetFixedDepthLaplacian().
+     *      $node1 start from &tree, $dDepth can't be smaller than 0.
+     *      $dDepth > 0 means $node1 is not deep enough and
+     *      $node1 will dive deeper and call this function again    */
     int dDepth=d2-d1;
-    int dcoords;
-    dcoords=(x2>>dDepth)-x1;
+    int d;
+    d=(x2>>dDepth)-x1;
+    if(d < 0) return 0;
+    if(!dDepth){
+        /**     $node1 is at $depth.
+         *      Now need to make sure that every pair of two nodes
+         *      is only counted once, because matrix is symmetric.
+         *      for() in GetFixedDepthLaplacian() enumerate all nodes,
+         *      and this function only count the node smaller than enumerated node. */
+        if(!d){
+            d=y2-y1;
+            if(d < 0) return 0;
+            if(!d){
+                d=z2-z1;
+                if(d < 0) return 0;
+            }
+        }
+        for(int i=0;i<3;++i)
+            scratch[i]=index[i]+(int)(node1->off[i]);
 
+        temp=ot->GetLaplacian(scratch);
+        if(node1==node2)
+            temp/=2;
+
+        if(fabs(temp)>EPSILON){
+            rowElements[elementCount].Value=temp;
+            /**     N = node1 offset in SortedNodes array with $depth   */
+            rowElements[elementCount].N=node1->nodeData.nodeIndex-offset;
+            ++elementCount;
+        }
+        return 0;
+    }
+    return 1;
 }
-*/
 
+// RefineFunction
 template<int Degree>
 void Octree<Degree>::RefineFunction::Function(OctNode* node1,const OctNode* node2){
     if(!node1->children && node1->depth()<this->depth)
         node1->initChildren();
 }
+
+template<int Degree>
+int Octree<Degree>::GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix, const int& depth, const SortedTreeNodes& sNodes){
+    LaplacianMatrixFunction mf;
+    mf.ot=this;
+
+    /**     the start of node with $depth       */
+    mf.offset=sNodes.nodeCount[depth];
+    /**     2 < myRadius << 3     */
+    float myRadius=int(2*radius-ROUND_EPS)+ROUND_EPS;
+
+    /**     matrix.rows = number of nodes at $depth     */
+    matrix.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
+
+    /**     call for max possible memory        */
+    mf.rowElements=(MatrixEntry<float> *)malloc(sizeof(MatrixEntry<float>) * matrix.rows );
+    for(int i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
+        OctNode const * const temp=sNodes.treeNodes[i];
+        mf.elementCount=0;
+        /**     mf.d2 is supposed to be $depth,
+         *      every one is at the same depth  */
+        mf.d2=int(temp->d);
+
+        mf.x2=int(temp->off[0]);
+        mf.y2=int(temp->off[1]);
+        mf.z2=int(temp->off[2]);
+
+        /**     input $temp node index information to $mf   */
+        mf.index[0]=mf.x2*fData.res;
+        mf.index[1]=mf.y2*fData.res;
+        mf.index[2]=mf.z2*fData.res;
+
+        /**     radius1:    1.500001
+         *      radius2:    0.5         */
+        OctNode::ProcessTerminatingNodeAdjacentNodes(temp,myRadius-float(0.5),
+                                                     &tree,float(0.5),
+                                                     &mf);
+        /**     Set row [0, number of nodes with $depth] to be each round $elementCount */
+        matrix.SetRowSize(i-sNodes.nodeCount[depth],mf.elementCount);
+        memcpy(matrix.m_ppElements[i-sNodes.nodeCount[depth]],
+               mf.rowElements, sizeof(MatrixEntry<float>) * mf.elementCount);
+    }
+    free(mf.rowElements);
+}
+
+//template<int Degree>
+//int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes){
+//    int i,iter=0;
+//    Vector<double> V,Solution;
+//    /**     generating lower triangular matrix  */
+//    SparseSymmetricMatrix<float> matrix;
+//    float myRadius,myRadius1,myRadius2;
+//    float dx,dy,dz;
+//    int x1,x2,y1,y2,z1,z2;
+//
+//    /**     current process depth is fixed,
+//     *      extract all nodes with this depth   */
+//    V.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
+//    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i)
+//        V[i-sNodes.nodeCount[depth]]=sNodes.treeNodes[i]->nodeData.value;
+//    /**     empty the allocator     */
+//    SparseSymmetricMatrix<float>::Allocator.rollBack();
+//    GetFixedDepthLaplacian(matrix,depth,sNodes);
+//    iter+=SparseSymmetricMatrix<float>::Solve(matrix,V,
+//                                              int(pow(matrix.rows,ITERATION_POWER)),
+//                                              Solution,double(EPSILON),1);
+//
+//    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
+//        sNodes.treeNodes[i]->nodeData.value = float(Solution[i-sNodes.nodeCount[depth]]);
+//    }
+//
+//}
+
+//template<int Degree>
+//int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes){
+//
+//}
+
+
 
 template<int Degree>
 int Octree<Degree>::NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position) {
@@ -707,4 +826,29 @@ void Octree<Degree>::finalize2(const int& refineNeighbors){
             temp=tree.nextNode(temp);
         }
     }
+}
+
+template<int Degree>
+int Octree<Degree>::LaplacianMatrixIteration(const int& subdivideDepth){
+    int i,iter=0;
+    SortedTreeNodes sNodes;
+    double t;
+    fData.setDotTables(fData.D2_DOT_FLAG);
+    /**     nodeData.nodeIndex of all nodes in &tree will be refresh.
+     *      They will be the index in SortedTreeNodes       */
+    sNodes.set(tree,true);
+
+    SparseMatrix<float>::SetAllocator(MEMORY_ALLOCATOR_BLOCK_SIZE);
+
+    /**     eliminate the &tree node divergence     */
+    sNodes.treeNodes[0]->nodeData.value=0;
+    for(i=1;i<sNodes.maxDepth;++i){
+        if(subdivideDepth > 0)
+            iter+=SolveFixedDepthMatrix(i,subdivideDepth,sNodes);
+        else
+            iter+=SolveFixedDepthMatrix(i,sNodes);
+    }
+    SparseMatrix<float>::Allocator.reset();
+    fData.clearDotTables(fData.DOT_FLAG | fData.D_DOT_FLAG | fData.D2_DOT_FLAG);
+    return iter;
 }

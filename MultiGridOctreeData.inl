@@ -89,6 +89,9 @@ template<int Degree>
 void Octree<Degree>::DivergenceFunction::Function(OctNode *node1, OctNode *node2) {
     for(int i=0;i<3;++i)
         scratch[i]=index[i]+int(node1->off[i]);
+    /**     SetLaplacianWeights():
+     *      $scratch has been set to be the index of <node2, node1>.
+     *      $node1 is changing.                                      */
     node1->nodeData.value+=ot->GetDivergence(scratch,normal);
 }
 
@@ -369,8 +372,8 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
 template<int Degree>
 int Octree<Degree>::HasNormals(OctNode *node, const float &epsilon) {
     int hasNormals=0;
-    int& idx=node->nodeData.nodeIndex;
-    Point3D<float>& normal=(*normals)[idx];
+    const int& idx=node->nodeData.nodeIndex;
+    const Point3D<float>& normal=(*normals)[idx];
     if(idx >= 0 && Length(normal) > epsilon)
         hasNormals=1;
     if(node->children)
@@ -614,8 +617,8 @@ void Octree<Degree>::finalize1(const int& refineNeighbors) {
         RefineFunction rf;
         temp=tree.nextNode();
         while(temp){
-            int& idx=temp->nodeData.nodeIndex;
-            Point3D<float>& normal=(*normals)[idx];
+            const int& idx=temp->nodeData.nodeIndex;
+            const Point3D<float>& normal=(*normals)[idx];
             /**     if current node is valid    */
             if(idx>=0 && Length(normal) > EPSILON){
                 rf.depth=temp->depth()-refineNeighbors;
@@ -630,4 +633,61 @@ void Octree<Degree>::finalize1(const int& refineNeighbors) {
             temp=tree.nextNode(temp);
         }
     }
+}
+
+template<int Degree>
+void Octree<Degree>::SetLaplacianWeights(void) {
+    OctNode* temp;
+
+    fData.setDotTables(fData.DOT_FLAG | fData.D_DOT_FLAG);
+    DivergenceFunction df;
+
+    df.ot=this;
+    temp=tree.nextNode();
+
+    /**     Since that normals is added to nodes with splatDepth,
+     *      use them to update the divergence of all nodes with different depths in nodeData.value  */
+    while(temp){
+        const int& idx=temp->nodeData.nodeIndex;
+        const Point3D<float>& normal=(*normals)[idx];
+        /**     Check if $temp has valid normal     */
+        if(idx < 0 || Length(normal) <= EPSILON) {
+            temp=tree.nextNode(temp);
+            continue;
+        }
+        df.normal=normal;
+        /**     Set the first dimension in fData.dotTable and fData.valueTable.
+         *      temp->off denote the index of corresponding baseFunctions to $temp node.    */
+        for(int i=0;i<DIMENSION;++i) {
+            df.index[i] = int(temp->off[i]) * fData.res;
+        }
+
+        /**     radius:     1.5     */
+
+        /**     $df member index has been set to be the index of $temp node's baseFunction.
+         *      The subnode of &tree which is near to &temp.
+         *      Their nodeData.value was added with the divergence of &temp in them.
+         *      normals of the nodes is used to calculate this value.               */
+        OctNode::ProcessNodeAdjacentNodes(temp,radius,&tree,radius,&df);
+        temp=tree.nextNode(temp);
+    }
+    fData.clearDotTables(fData.D_DOT_FLAG);
+    temp=tree.nextNode();
+
+    /**     Save the normal length as weight of node
+     *      in temp->nodeData.centerWeightContribution     */
+    while(temp){
+        const int& idx=temp->nodeData.nodeIndex;
+        if(idx<0)
+            temp->nodeData.centerWeightContribution=0;
+        else {
+            const Point3D<float>& normal=(*normals)[idx];
+            temp->nodeData.centerWeightContribution = float(Length(normal));
+        }
+        temp=tree.nextNode(temp);
+    }
+
+    /**     normals has been transformed to weight    */
+    delete normals;
+    normals=NULL;
 }

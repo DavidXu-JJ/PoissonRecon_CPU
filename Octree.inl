@@ -83,6 +83,74 @@ void OctNode::__processNodeNodes(OctNode* node,NodeAdjacencyFunction* F) {
 }
 
 
+template<class TerminatingNodeAdjacencyFunction>
+void OctNode::__ProcessNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                         OctNode* node1, const float& radius1,
+                                         OctNode* node2, const float& radius2, const float& cWidth2,
+                                         TerminatingNodeAdjacencyFunction* F)
+{
+    /**     SetLaplacianWeights(): DivergenceFunction
+     *      (dx, dy, dz) is the vector(node1->node2)
+     *      radius1:    1.5 * width of node1
+     *      radius2:    1.5 * width of node2
+     *      cWidth2:    radius of node2 = width of node2 / 2    */
+
+    /**     $cWidth takes half of node2's radius because it's convenient to
+     *      move the center position to generate new (dx, dy, dz).
+     *      Another half of node2's radius is offset by $radius.    */
+    float cWidth=cWidth2/2;
+    float radius=radius2/2;
+    int o=ChildOverlap(dx,dy,dz,radius1+radius,cWidth);
+    if(o) {
+        float dx1=dx-cWidth;
+        float dx2=dx+cWidth;
+        float dy1=dy-cWidth;
+        float dy2=dy+cWidth;
+        float dz1=dz-cWidth;
+        float dz2=dz+cWidth;
+        if(o&  1){
+            F->Function(&node2->children[0],node1);
+            if(node2->children[0].children)
+                __ProcessNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,&node2->children[0],radius,cWidth,F);
+        }
+        if(o&  2){
+            F->Function(&node2->children[1],node1);
+            if(node2->children[1].children)
+                __ProcessNodeAdjacentNodes(dx2,dy1,dz1,node1,radius1,&node2->children[1],radius,cWidth,F);
+        }
+        if(o&  4){
+            F->Function(&node2->children[2],node1);
+            if(node2->children[2].children)
+                __ProcessNodeAdjacentNodes(dx1,dy2,dz1,node1,radius1,&node2->children[2],radius,cWidth,F);
+        }
+        if(o&  8){
+            F->Function(&node2->children[3],node1);
+            if(node2->children[3].children)
+                __ProcessNodeAdjacentNodes(dx2,dy2,dz1,node1,radius1,&node2->children[3],radius,cWidth,F);
+        }
+        if(o& 16){
+            F->Function(&node2->children[4],node1);
+            if(node2->children[4].children)
+                __ProcessNodeAdjacentNodes(dx1,dy1,dz2,node1,radius1,&node2->children[4],radius,cWidth,F);
+        }
+        if(o& 32){
+            F->Function(&node2->children[5],node1);
+            if(node2->children[5].children)
+                __ProcessNodeAdjacentNodes(dx2,dy1,dz2,node1,radius1,&node2->children[5],radius,cWidth,F);
+        }
+        if(o& 64){
+            F->Function(&node2->children[6],node1);
+            if(node2->children[6].children)
+                __ProcessNodeAdjacentNodes(dx1,dy2,dz2,node1,radius1,&node2->children[6],radius,cWidth,F);
+        }
+        if(o&128){
+            F->Function(&node2->children[7],node1);
+            if(node2->children[7].children)
+                __ProcessNodeAdjacentNodes(dx2,dy2,dz2,node1,radius1,&node2->children[7],radius,cWidth,F);
+        }
+    }
+}
+
 template<class NodeAdjacencyFunction>
 void OctNode::__ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
                                                OctNode* node1, const float& radius1,
@@ -92,8 +160,7 @@ void OctNode::__ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& d
 {
     /**     $cWidth takes half of node2's radius because it's convenient to
      *      move the center position to generate new (dx, dy, dz).
-     *      Another half of node2's radius is offset by $radius.
-     */
+     *      Another half of node2's radius is offset by $radius.    */
     float cWidth=cWidth2/2;
     float radius=radius2/2;
 
@@ -573,6 +640,59 @@ OctNode& OctNode::operator = (const OctNode& node){
         }
     }
     return *this;
+}
+
+
+template<class NodeAdjacencyFunction>
+void OctNode::ProcessNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                     OctNode* node1, const float& radius1,
+                                     OctNode* node2, const float& radius2, const float& width2,
+                                     NodeAdjacencyFunction* F,const int& processCurrent)
+{
+    /**     SetLaplacianWeights(): DivergenceFunction
+     *      (dx, dy, dz) is the vector(node2->node1)
+     *      radius1:    1.5 * width of node1
+     *      radius2:    1.5 * width of node2
+     *      width2:     width of node2              */
+    if(!Overlap(dx,dy,dz,radius1+radius2)) return;
+    if(processCurrent) F->Function(node2,node1);
+    if(!node2->children) return;
+    /**     SetLaplacianWeights(): DivergenceFunction
+     *      (dx, dy, dz) is the vector(node1->node2)
+     *      radius1:    1.5 * width of node1
+     *      radius2:    1.5 * width of node2
+     *      cWidth2:    radius of node2 = width of node2 / 2    */
+    __ProcessNodeAdjacentNodes(-dx,-dy,-dz,node1,radius1,node2,radius2,width2/2,F);
+}
+
+template<class NodeAdjacencyFunction>
+void OctNode::ProcessNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                       OctNode* node2, const float& radius2,
+                                       NodeAdjacencyFunction* F,const int& processCurrent)
+{
+    /**     SetLaplacianWeights(): DivergenceFunction
+     *      radius1:    1.5
+     *      radius2:    1.5                         */
+    Point3D<float> c1,c2;
+    float w1,w2;
+
+    node1->centerAndWidth(c1,w1);
+
+    /**     c2 is the &tree's center,
+     *      w2 is the width of [0, 1]^3 node = 1    */
+    node2->centerAndWidth(c2,w2);
+
+    /**     SetLaplacianWeights(): DivergenceFunction
+     *      (dx, dy, dz) is the vector(node2->node1)
+     *      radius1:    1.5 * width of node1
+     *      radius2:    1.5 * width of node2
+     *      width2:     width of node2              */
+    ProcessNodeAdjacentNodes(c1.coords[0]-c2.coords[0],
+                             c1.coords[1]-c2.coords[1],
+                             c1.coords[2]-c2.coords[2],
+                             node1,radius1*w1,
+                             node2,radius2*w2,w2,
+                             F,processCurrent);
 }
 
 template<class NodeAdjacencyFunction>

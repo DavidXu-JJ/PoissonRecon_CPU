@@ -65,7 +65,16 @@ private:
     template<class NodeAdjacencyFunction>
     void __processNodeNodes(OctNode* node,NodeAdjacencyFunction* F);
 
+    /**     this function is recursive call F->Function() depends on whether node has children  */
+    template<class TerminatingNodeAdjacencyFunction>
+    static void __ProcessNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                           OctNode* node1, const float& radius1,
+                                           OctNode* node2, const float& radius2, const float& cWidth2,
+                                           TerminatingNodeAdjacencyFunction* F);
 
+
+    /**     Used for refine node,
+     *      this function is recursive call F->Function() depends on nodes' depth   */
     template<class NodeAdjacencyFunction>
     static void __ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
                                                    OctNode* node1, const float& radius1,
@@ -176,6 +185,20 @@ public:
     bool read(FILE* fp);
 
     OctNode& operator = (const OctNode& node);
+
+    /**     Similar to ProcessMaxDepthNodeAdjacentNodes(),
+     *      but don't take depth into account/consideration.    */
+    template<class NodeAdjacencyFunction>
+    static void ProcessNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                         OctNode* node1, const float& radius1,
+                                         OctNode* node2, const float& radius2, const float& width2,
+                                         NodeAdjacencyFunction* F,const int& processCurrent=1);
+    /**     Similar to ProcessMaxDepthNodeAdjacentNodes(),
+     *      but don't take depth into account/consideration.    */
+    template<class NodeAdjacencyFunction>
+    static void ProcessNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                         OctNode* node2, const float& radius2,
+                                         NodeAdjacencyFunction* F,const int& processCurrent=1);
 
     template<class NodeAdjacencyFunction>
     static void ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,

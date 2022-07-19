@@ -150,6 +150,8 @@ public:
      *      call initChildren() to the node close to valid node
      *      until depth >= ( valid node's depth - $refineNeighbors )     */
     void finalize1(const int& refineNeighbors);
+
+    void SetLaplacianWeights(void);
 };
 
 #include "MultiGridOctreeData.inl"

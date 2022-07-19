@@ -74,7 +74,7 @@ public:
       *          (flags & D_DOT_FLAG) is True,   $dDotTable   will be set
       *          (flags & D2_DOT_FLAG) is True,  $d2DotTable  will be set
       *     $dotTable contains inner product of the baseFunctions
-      *     size of these array is all res*res                           */
+      *     size of these array is all [res * res]                       */
     virtual void   setDotTables(const int& flags);
     virtual void clearDotTables(const int& flags);
 
@@ -82,7 +82,8 @@ public:
       *          (flags & D_VALUE_FLAG) is True, $dValueTables   will be set
       *     $valueTables[i*res2 -- i*res2+res2-1] is smoothed baseFunctions[i]
       *     discrete value from [0, 1]
-      *     so is dValueTables                                           */
+      *     so is dValueTables.
+      *     size of these array is all [res * res2]                     */
     virtual void   setValueTables(const int& flags,const double& smooth=0);
     virtual void clearValueTables(void);
 

@@ -87,7 +87,7 @@ public:
     void reset(const size_t& newSize);
 
 
-    /**     assume that StartPolynomial is sorted by *set* function
+    /**     assume that StartPolynomial is sorted by set() function
       *     calculate f0(t) + f1(t) + f2(t) + ... + fn(t)
       *     StartPolynomial n+1's start >= t    */
     double operator()(const double& t) const;

@@ -33,7 +33,7 @@ public:
     IsoNodeData(void);
     ~IsoNodeData(void);
 
-    /**     get the times that *addEdgeSegment* called on face $faceIndex   */
+    /**     get the times that addEdgeSegment() called on face $faceIndex   */
     inline int edgeCount(const int& faceIndex) const;
     /**     get two edges' indices added on face $faceIndex       */
     inline int edgeIndex(const int& faceIndex, const int& e1, const int& e2) const;
@@ -118,11 +118,11 @@ public:
 
     OctNode* parent;
     OctNode* children;
-    /**     in Function *initChildren*:
+    /**     in Function initChildren():
      *      if the node at depth n,
      *      the $off will range in [2^n-1, 2^(n+1)-2].
      *      $off value denotes the index in FunctionData's baseFunction.
-     *      $off is global and offset get by *depthAndOffset* is regional on its depth  */
+     *      $off is global and offset get by depthAndOffset() is regional on its depth  */
     int d,off[3];
     NodeData nodeData;
 

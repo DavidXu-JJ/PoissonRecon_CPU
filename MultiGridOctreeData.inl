@@ -691,3 +691,20 @@ void Octree<Degree>::SetLaplacianWeights(void) {
     delete normals;
     normals=NULL;
 }
+
+template<int Degree>
+void Octree<Degree>::finalize2(const int& refineNeighbors){
+    OctNode* temp;
+    if(refineNeighbors>=0){
+        RefineFunction rf;
+        temp=tree.nextNode();
+        while(temp){
+            const float& divergence=temp->nodeData.value;
+            if(fabs(divergence)>EPSILON){
+                rf.depth=temp->depth()-refineNeighbors;
+                OctNode::ProcessMaxDepthNodeAdjacentNodes(temp,2*radius,&tree,float(0.5),rf.depth,&rf);
+            }
+            temp=tree.nextNode(temp);
+        }
+    }
+}

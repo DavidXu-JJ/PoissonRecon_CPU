@@ -196,15 +196,16 @@ public:
      *      until depth >= ( valid node's depth - $refineNeighbors )     */
     void finalize1(const int& refineNeighbors=-1);
 
-    /**     Use this->normals to update nodeData.value
-     *      with their contribution of divergence to related node.
-     *      Use this->normals to replace old $index node.nodeData.centerWeightContribution
-     *      with Length of this->normals[$index].(Will be used in getting isovalue)     */
+    /**     Use this->normals to update nodeData.value,
+     *      nodaData.value now is <divergence, Fo>.
+     *      Use Length of this->normals[$index] to replace old $index node.nodeData.centerWeightContribution */
     void SetLaplacianWeights(void);
 
     /**     Similar to finalize1(), judge if the node is valid with divergence  */
     void finalize2(const int& refineNeighbors=-1);
 
+    /**     nodeData.value: <divergence, Fo> ->
+     *      solution of surface function = sum(Fo * x), o in every node   */
     int LaplacianMatrixIteration(const int& subdivideDepth);
 };
 

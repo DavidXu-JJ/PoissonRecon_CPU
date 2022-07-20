@@ -1194,7 +1194,7 @@ void Octree<Degree>::SetLaplacianWeights(void) {
         /**     radius:     1.5     */
 
         /**     $df member index has been set to be the index of $temp node's baseFunction.
-         *      The subnode of &tree which is near to &temp.
+         *      The sub-node of &tree which is near to &temp.
          *      Their nodeData.value was added with the divergence of &temp in them.
          *      normals of the nodes is used to calculate this value.               */
         OctNode::ProcessNodeAdjacentNodes(temp,radius,&tree,radius,&df);

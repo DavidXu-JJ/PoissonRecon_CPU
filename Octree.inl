@@ -95,6 +95,11 @@ void OctNode::__ProcessNodeAdjacentNodes(const float& dx, const float& dy, const
      *      radius2:    1.5 * width of node2
      *      cWidth2:    radius of node2 = width of node2 / 2    */
 
+    /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
+     *      radius1:    1.4449  * width
+     *      radius2:    0.9999  * width
+     *      width2:     radius = width / 2                      */
+
     /**     $cWidth takes half of node2's radius because it's convenient to
      *      move the center position to generate new (dx, dy, dz).
      *      Another half of node2's radius is offset by $radius.    */
@@ -730,6 +735,11 @@ void OctNode::ProcessNodeAdjacentNodes(const float& dx, const float& dy, const f
      *      radius1:    1.5 * width of node1
      *      radius2:    1.5 * width of node2
      *      width2:     width of node2              */
+
+    /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
+     *      radius1:    1.4449  * width
+     *      radius2:    0.9999  * width
+     *      width2:     width                        */
     if(!Overlap(dx,dy,dz,radius1+radius2)) return;
     if(processCurrent) F->Function(node2,node1);
     if(!node2->children) return;
@@ -738,6 +748,11 @@ void OctNode::ProcessNodeAdjacentNodes(const float& dx, const float& dy, const f
      *      radius1:    1.5 * width of node1
      *      radius2:    1.5 * width of node2
      *      cWidth2:    radius of node2 = width of node2 / 2    */
+
+    /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
+     *      radius1:    1.4449  * width
+     *      radius2:    0.9999  * width
+     *      width2:     radius = width / 2                      */
     __ProcessNodeAdjacentNodes(-dx,-dy,-dz,node1,radius1,node2,radius2,width2/2,F);
 }
 

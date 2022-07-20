@@ -80,9 +80,12 @@ class Octree {
         void Function(OctNode* node1,const OctNode* node2);
     };
 
+    /**     Assign matrix to be the lower triangle Laplacian matrix of all nodes with $depth    */
     int GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix, const int& depth, const SortedTreeNodes& sNodes);
 
-//    int SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes);
+    /**     Use the Lx=v Solution at $depth to project fixed-depth solution back onto deeper nodes' residual    */
+    int SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes);
+
 //    int SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes);
 
 

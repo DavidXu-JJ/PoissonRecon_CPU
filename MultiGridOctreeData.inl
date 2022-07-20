@@ -95,7 +95,7 @@ void Octree<Degree>::DivergenceFunction::Function(OctNode *node1, OctNode *node2
     for(int i=0;i<3;++i)
         scratch[i]=index[i]+int(node1->off[i]);
     /**     SetLaplacianWeights():
-     *      $scratch has been set to be the index of <node2, node1>.
+     *      $scratch has been set to be the index of [node2][node1].
      *      $node1 is changing.                                      */
     node1->nodeData.value+=ot->GetDivergence(scratch,normal);
 }
@@ -105,7 +105,15 @@ template<int Degree>
 void Octree<Degree>::LaplacianProjectionFunction::Function(OctNode *node1, OctNode *node2) {
     for(int i=0;i<3;++i)
         scratch[i]=index[i]+int(node1->off[i]);
-    /**     $scratch contains node1 and node2 index information     */
+    /**     $scratch denote [this][node1].
+     *      $node1->nodeData.value is still divergence.
+     *      $this->value is the Solution of node1 to Lx=v.
+     *
+     *      Paper:
+     *      Furthermore, there is an inherent multiresolution structure ,
+     *      so we use an approach similar to the multigrid approach in [GKS02],
+     *      solving the restriction Ld of L to the space spanned by the depth d functions (using a conjugate gradient solver)
+     *      and projecting the fixed-depth solution back  to update the residual.*/
     node1->nodeData.value-=float(ot->GetLaplacian(scratch)*value);
 }
 
@@ -209,33 +217,132 @@ int Octree<Degree>::GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix,
     free(mf.rowElements);
 }
 
-//template<int Degree>
-//int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes){
-//    int i,iter=0;
-//    Vector<double> V,Solution;
-//    /**     generating lower triangular matrix  */
-//    SparseSymmetricMatrix<float> matrix;
-//    float myRadius,myRadius1,myRadius2;
-//    float dx,dy,dz;
-//    int x1,x2,y1,y2,z1,z2;
-//
-//    /**     current process depth is fixed,
-//     *      extract all nodes with this depth   */
-//    V.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
-//    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i)
-//        V[i-sNodes.nodeCount[depth]]=sNodes.treeNodes[i]->nodeData.value;
-//    /**     empty the allocator     */
-//    SparseSymmetricMatrix<float>::Allocator.rollBack();
-//    GetFixedDepthLaplacian(matrix,depth,sNodes);
-//    iter+=SparseSymmetricMatrix<float>::Solve(matrix,V,
-//                                              int(pow(matrix.rows,ITERATION_POWER)),
-//                                              Solution,double(EPSILON),1);
-//
-//    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
-//        sNodes.treeNodes[i]->nodeData.value = float(Solution[i-sNodes.nodeCount[depth]]);
-//    }
-//
-//}
+template<int Degree>
+int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes){
+    int i,iter=0;
+    Vector<double> V,Solution;
+    /**     generating lower triangular matrix  */
+    SparseSymmetricMatrix<float> matrix;
+
+    /**     current process depth is fixed,
+     *      extract all nodes' divergence with this depth    */
+    V.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
+    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i)
+        V[i-sNodes.nodeCount[depth]]=sNodes.treeNodes[i]->nodeData.value;
+    /**     empty the allocator     */
+    SparseSymmetricMatrix<float>::Allocator.rollBack();
+    GetFixedDepthLaplacian(matrix,depth,sNodes);
+    iter+=SparseSymmetricMatrix<float>::Solve(matrix,V,
+                                              int(pow(matrix.rows,ITERATION_POWER)),
+                                              Solution,double(EPSILON),1);
+
+    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
+        sNodes.treeNodes[i]->nodeData.value = float(Solution[i-sNodes.nodeCount[depth]]);
+    }
+
+    float myRadius,myRadius1,myRadius2;
+    /**     myRadius = 1.0001   */
+    myRadius=float(radius+ROUND_EPS-0.5);
+
+    myRadius1=myRadius2=radius;
+
+    /**     myRadius1 = 1.4449
+     *      myRadius2 = 0.9999  */
+    myRadius1=float(int(2*myRadius1+1-ROUND_EPS)/2-ROUND_EPS);
+    myRadius2=float(int(2*myRadius2  -ROUND_EPS)/2-ROUND_EPS);
+
+    /**     myRadius  = 1.0001 * width
+     *      myRadius1 = 1.4449  * width
+     *      myRadius2 = 0.9999  * width     */
+    myRadius /=(1<<depth);
+    myRadius1/=(1<<depth);
+    myRadius2/=(1<<depth);
+
+    float dx,dy,dz;
+    int x1,x2,y1,y2,z1,z2;
+    if(depth<sNodes.maxDepth-1){
+        LaplacianProjectionFunction pf;
+        OctNode* node1,* node2;
+        pf.ot=this;
+        int idx1,idx2;
+        int offset=sNodes.nodeCount[depth];
+
+        /**     update the residual of node1 by
+         *      projecting node2 solution      */
+        for(i=0;i<matrix.rows;++i){
+            idx1=i;
+            node1=sNodes.treeNodes[idx1+offset];
+            if(!node1->children) continue;
+            x1=int(node1->off[0]);
+            y1=int(node1->off[1]);
+            z1=int(node1->off[2]);
+            for(int j=0;j<matrix.rowSizes[i];++j){
+                idx2=matrix.m_ppElements[i][j].N;
+                node2=sNodes.treeNodes[idx2+offset];
+                x2=int(node2->off[0]);
+                y2=int(node2->off[1]);
+                z2=int(node2->off[2]);
+
+                pf.value=Solution[idx2];
+                pf.index[0]= x2 * fData.res;
+                pf.index[1]= y2 * fData.res;
+                pf.index[2]= z2 * fData.res;
+                dx=float(x2-x1)/(1<<depth);
+                dy=float(y2-y1)/(1<<depth);
+                dz=float(z2-z1)/(1<<depth);
+
+                if(fabs(dx) < myRadius && fabs(dy) < myRadius && fabs(dz) < myRadius) {
+                    /**     When node1 and node2 is neighbor    */
+                    node1->processNodeNodes(node2, &pf, 0);
+                } else {
+                    /**     radius1:    1.4449  * width
+                     *      radius2:    0.9999  * width
+                     *      width2:     width
+                     *      (dx, dy, dz) is the vector(node1->node2)    */
+                    OctNode::ProcessNodeAdjacentNodes(dx,dy,dz,
+                                                      node2,myRadius1,
+                                                      node1,myRadius2, float(1.0/(1<<depth)),
+                                                      &pf,0);
+                }
+            }
+        }
+
+        /**     update the residual of node2 by
+         *      projecting node1 solution      */
+        for(i=0;i<matrix.rows;++i){
+            idx1=i;
+            node1=sNodes.treeNodes[idx1+offset];
+            x1=int(node1->off[0]);
+            y1=int(node1->off[1]);
+            z1=int(node1->off[2]);
+            pf.index[0]= x1 * fData.res;
+            pf.index[1]= y1 * fData.res;
+            pf.index[2]= z1 * fData.res;
+            for(int j=0;j<matrix.rowSizes[i];++j){
+                idx2=matrix.m_ppElements[i][j].N;
+                node2=sNodes.treeNodes[idx2+offset];
+                if(idx1!=idx2 && node2->children){
+                    x2=int(node2->off[0]);
+                    y2=int(node2->off[1]);
+                    z2=int(node2->off[2]);
+                    dx=float(x1-x2)/(1<<depth);
+                    dy=float(y1-y2)/(1<<depth);
+                    dz=float(z1-z2)/(1<<depth);
+                    if(fabs(dx) < myRadius && fabs(dy) < myRadius && fabs(dz) < myRadius) {
+                        node2->processNodeNodes(node1,&pf,0);
+                    }else{
+                        OctNode::ProcessNodeAdjacentNodes(dx,dy,dz,
+                                                          node1,myRadius1,
+                                                          node2,myRadius2,float(1.0/(1<<depth)),
+                                                          &pf,0);
+                    }
+                }
+            }
+        }
+    }
+
+    return iter;
+}
 
 //template<int Degree>
 //int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes){

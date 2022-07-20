@@ -10,12 +10,14 @@
 using std::unordered_map;
 
 class VertexData {
+public:
     /**     Assume the maxDepth is set,
      *      then the resolution of valueTable is (1<<maxDepth+1).
-     *      Return the index of $node's center in fData's valueTable.
-     *      Value of this center is valueTable[node.off*res2+returnValue],
-     *      equals fData.baseFunctions[off](returnValue).           */
+     *      Assign $index with the index of $node's center in fData's valueTable.
+     *      Value of this center is valueTable[node.off*res2+index[i]],
+     *      equals fData.baseFunctions[off](index[i]).           */
     static long long CenterIndex(const OctNode* node, const int& maxDepth, int index[DIMENSION]);
+
 };
 
 class SortedTreeNodes {
@@ -66,6 +68,7 @@ class Octree {
     class LaplacianMatrixFunction{
     public:
         int x2,y2,z2,d2;
+        /**     use to call GetLaplacian()   */
         Octree<Degree>* ot;
         int index[DIMENSION], scratch[DIMENSION];
         int elementCount,offset;
@@ -84,6 +87,16 @@ class Octree {
         int elementCount;
         MatrixEntry<float>* rowElements;
         int Function(const OctNode* node1, const OctNode* node2);
+    };
+
+    class PointIndexValueFunction{
+    public:
+        int res2;
+        double* valueTables;
+        int index[DIMENSION];
+        float value;
+        /**     calculate $node in which iso-value surface   */
+        void Function(const OctNode* node);
     };
 
     class AdjacencyCountFunction{
@@ -201,12 +214,14 @@ public:
      *      Use Length of this->normals[$index] to replace old $index node.nodeData.centerWeightContribution */
     void SetLaplacianWeights(void);
 
-    /**     Similar to finalize1(), judge if the node is valid with divergence  */
+    /**     Similar to finalize1(), judge if the node is valid with <divergence, Fo>  */
     void finalize2(const int& refineNeighbors=-1);
 
     /**     nodeData.value: <divergence, Fo> ->
      *      solution of surface function = sum(Fo * x), o in every node   */
     int LaplacianMatrixIteration(const int& subdivideDepth);
+
+    float GetIsoValue(void);
 };
 
 #include "MultiGridOctreeData.inl"

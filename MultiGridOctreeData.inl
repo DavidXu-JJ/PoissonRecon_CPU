@@ -10,6 +10,17 @@
 const float EPSILON=float(1e-6);
 const float ROUND_EPS=float(1e-5);
 
+// VertexData
+long long VertexData::CenterIndex(const OctNode *node, const int &maxDepth, int idx[DIMENSION]) {
+    int d,o[3];
+    node->depthAndOffset(d,o);
+    for(int i=0;i<DIMENSION;++i){
+        idx[i]=BinaryNode<float>::CornerIndex(maxDepth+1,d+1,o[i]<<1,1);
+    }
+    return (long long)(idx[0]) | (long long)(idx[1])<<15 | (long long)(idx[2])<<30;
+}
+
+
 // SortedTreeNodes
 SortedTreeNodes::SortedTreeNodes(void) {
     nodeCount=NULL;
@@ -204,6 +215,15 @@ int Octree<Degree>::RestrictedLaplacianMatrixFunction::Function(const OctNode* n
         }
     }
     return 1;
+}
+
+template<int Degree>
+void Octree<Degree>::PointIndexValueFunction::Function(const OctNode *node) {
+    int idx[DIMENSION];
+    for(int i=0;i<3;++i)
+        idx[i]=index[i]+int(node->off[i])*res2;
+    /**     Fo = Fo,x * Fo,y * Fo,z     */
+    value += node->nodeData.value * float(valueTables[idx[0]] * valueTables[idx[1]] * valueTables[idx[2]]);
 }
 
 template<int Degree>
@@ -1261,4 +1281,38 @@ int Octree<Degree>::LaplacianMatrixIteration(const int& subdivideDepth){
     SparseMatrix<float>::Allocator.reset();
     fData.clearDotTables(fData.DOT_FLAG | fData.D_DOT_FLAG | fData.D2_DOT_FLAG);
     return iter;
+}
+
+template<int Degree>
+float Octree<Degree>::GetIsoValue(void){
+    const OctNode* temp;
+    float isoValue,weightSum,w;
+    float myRadius;
+    PointIndexValueFunction cf;
+    Point3D<float> center;
+    float width;
+
+    fData.setValueTables(fData.VALUE_FLAG,0);
+    cf.valueTables=fData.valueTables;
+    cf.res2=fData.res2;
+    myRadius=radius;
+    return isoValue/weightSum;
+    isoValue=weightSum=0;
+    temp=tree.nextNode();
+    while(temp){
+        /**     length of normal, only maxDepth node with normal has WeightContribution     */
+        w=temp->nodeData.centerWeightContribution;
+        if(w>EPSILON){
+            cf.value=0;
+            VertexData::CenterIndex(temp,fData.depth,cf.index);
+            temp->centerAndWidth(center,width);
+            /**     For those nodes that is close to center enough,
+             *      sum up (x * Fo) = (x * Fo,x * Fo,y * Fo,z)          */
+            OctNode::ProcessPointAdjacentNodes(center,&tree,myRadius,&cf);
+            isoValue+=cf.value*w;
+            weightSum+=w;
+        }
+        temp=tree.nextNode(temp);
+    }
+    return isoValue/weightSum;
 }

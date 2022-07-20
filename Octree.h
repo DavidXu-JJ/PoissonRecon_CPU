@@ -101,6 +101,12 @@ private:
                                                       OctNode* node2, const float& radius2, const float& cWidth2,
                                                       NodeAdjacencyFunction* F);
 
+    /**     Call F->Function() at all reached nodes     */
+    template<class PointAdjacencyFunction>
+    static void __ProcessPointAdjacentNodes(const float& dx,const float& dy,const float& dz,
+                                            OctNode* node2,const float& radius2,const float& cWidth2,
+                                            PointAdjacencyFunction* F);
+
     /**     $dir denotes the direction axis, $off denotes bigger or smaller face.
      *      no new node will be created,
      *      return the nearest node along $dir and $off direction.
@@ -263,6 +269,15 @@ public:
                                                  TerminatingNodeAdjacencyFunction* F,
                                                  const int& processCurrent=1);
 
+    template<class PointAdjacencyFunction>
+    static void ProcessPointAdjacentNodes(const float& dx,const float& dy,const float& dz,
+                                          OctNode* node2,const float& radius2,const float& width2,
+                                          PointAdjacencyFunction* F,const int& processCurrent=1);
+
+    template<class PointAdjacencyFunction>
+    static void ProcessPointAdjacentNodes(const Point3D<float>& center1,
+                                          OctNode* node2, const float& radius2,
+                                          PointAdjacencyFunction* F, const int& processCurrent=1);
 
     /**     return the nearest corner index in a node center at $center */
     static int CornerIndex(const Point3D<float>& center,const Point3D<float>& p);

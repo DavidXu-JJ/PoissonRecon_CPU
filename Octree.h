@@ -72,9 +72,19 @@ private:
                                            OctNode* node2, const float& radius2, const float& cWidth2,
                                            TerminatingNodeAdjacencyFunction* F);
 
+    /**     Only call F->Function() at fixed depth.
+     *      If depth < $depth, it will go deeper.    */
+    template<class NodeAdjacencyFunction>
+    static void __ProcessFixedDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                     OctNode* node1, const float& radius1,
+                                                     OctNode* node2, const float& radius2, const float& cWidth2,
+                                                     const int& depth,
+                                                     NodeAdjacencyFunction* F);
 
-    /**     Used for refine node,
-     *      this function is recursive call F->Function() depends on nodes' depth   */
+
+    /**     Used for refine node, count adjacent nodes.
+     *      F->Function() will be called when depth <= $depth in this function.
+     *      If depth < $depth, it will go deeper.                   */
     template<class NodeAdjacencyFunction>
     static void __ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
                                                    OctNode* node1, const float& radius1,
@@ -82,6 +92,8 @@ private:
                                                    const int& depth,
                                                    NodeAdjacencyFunction* F);
 
+    /**     Used to get Laplacian matrix's entries.
+     *      Only successfully call F->Function() when two nodes is close enough and at same depth.  */
     template<class NodeAdjacencyFunction>
     static void __ProcessTerminatingNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
                                                       OctNode* node1, const float& radius1,
@@ -205,6 +217,22 @@ public:
     static void ProcessNodeAdjacentNodes(OctNode* node1, const float& radius1,
                                          OctNode* node2, const float& radius2,
                                          NodeAdjacencyFunction* F,const int& processCurrent=1);
+
+    /**     Very similar to ProcessMaxDepthNodeAdjacentNodes()  */
+    template<class NodeAdjacencyFunction>
+    static void ProcessFixedDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
+                                                   OctNode* node1, const float& radius1,
+                                                   OctNode* node2, const float& radius2, const float& width2,
+                                                   const int& depth,
+                                                   NodeAdjacencyFunction* F,
+                                                   const int& processCurrent=1);
+
+    template<class NodeAdjacencyFunction>
+    static void ProcessFixedDepthNodeAdjacentNodes(OctNode* node1, const float& radius1,
+                                                   OctNode* node2, const float& radius2,
+                                                   const int& depth,
+                                                   NodeAdjacencyFunction* F,
+                                                   const int& processCurrent=1);
 
     template<class NodeAdjacencyFunction>
     static void ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,

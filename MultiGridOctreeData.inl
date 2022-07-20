@@ -66,7 +66,7 @@ template<int Degree>
 float Octree<Degree>::GetLaplacian(const int idx[DIMENSION]) const
 {
 #if USE_DOT_RATIOS
-    return Real(fData.dotTable[idx[0]]*fData.dotTable[idx[1]]*fData.dotTable[idx[2]]*(fData.d2DotTable[idx[0]]+fData.d2DotTable[idx[1]]+fData.d2DotTable[idx[2]]));
+    return float(fData.dotTable[idx[0]]*fData.dotTable[idx[1]]*fData.dotTable[idx[2]]*(fData.d2DotTable[idx[0]]+fData.d2DotTable[idx[1]]+fData.d2DotTable[idx[2]]));
 #else // !USE_DOT_RATIOS
     double dot[3];
     dot[0]=fData.dotTable[idx[0]];
@@ -85,7 +85,7 @@ float Octree<Degree>::GetDivergence(const int idx[DIMENSION],const Point3D<float
 {
 #if USE_DOT_RATIOS
     double dot=fData.dotTable[idx[0]]*fData.dotTable[idx[1]]*fData.dotTable[idx[2]];
-    return Real(dot*(fData.dDotTable[idx[0]]*normal.coords[0]+fData.dDotTable[idx[1]]*normal.coords[1]+fData.dDotTable[idx[2]]*normal.coords[2]));
+    return float(dot*(fData.dDotTable[idx[0]]*normal.coords[0]+fData.dDotTable[idx[1]]*normal.coords[1]+fData.dDotTable[idx[2]]*normal.coords[2]));
 #else // !USE_DOT_RATIOS
     double dot[DIMENSION];
 	dot[0]=fData.dotTable[idx[0]];
@@ -260,15 +260,14 @@ int Octree<Degree>::GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix,
     /**     call for max possible memory        */
     mf.rowElements=(MatrixEntry<float> *)malloc(sizeof(MatrixEntry<float>) * matrix.rows );
     for(int i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
-        OctNode const * const temp=sNodes.treeNodes[i];
         mf.elementCount=0;
         /**     mf.d2 is supposed to be $depth,
          *      every one is at the same depth  */
-        mf.d2=int(temp->d);
+        mf.d2=int(sNodes.treeNodes[i]->d);
 
-        mf.x2=int(temp->off[0]);
-        mf.y2=int(temp->off[1]);
-        mf.z2=int(temp->off[2]);
+        mf.x2=int(sNodes.treeNodes[i]->off[0]);
+        mf.y2=int(sNodes.treeNodes[i]->off[1]);
+        mf.z2=int(sNodes.treeNodes[i]->off[2]);
 
         /**     input $temp node index information to $mf   */
         mf.index[0]=mf.x2*fData.res;
@@ -277,7 +276,7 @@ int Octree<Degree>::GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix,
 
         /**     radius1:    1.500001
          *      radius2:    0.5         */
-        OctNode::ProcessTerminatingNodeAdjacentNodes(temp,myRadius-float(0.5),
+        OctNode::ProcessTerminatingNodeAdjacentNodes(sNodes.treeNodes[i],myRadius-float(0.5),
                                                      &tree,float(0.5),
                                                      &mf);
         /**     Set row [0, number of nodes with $depth] to be each round $elementCount */
@@ -537,7 +536,7 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
         /**     Author: Get the associated vector   */
         SubValues.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j){
-            SubValues[j]=Values[asf.adjacencyCount[j]-sNodes.nodeCount[depth]];
+            SubValues[j]=Values[asf.adjacencies[j]-sNodes.nodeCount[depth]];
         }
         SubSolution.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j) {
@@ -848,7 +847,7 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
     /**     reach the nearest node to $position point at splatDepth */
     while(temp->depth()<splatDepth){
         if(!temp->children){
-            printf("Can't reach splatDepth.\nOctree<Degree>::NonLinearSplatOrientedPoint error.\n");
+//            printf("Can't reach splatDepth.\nOctree<Degree>::NonLinearSplatOrientedPoint error.\n");
             return;
         }
         int cIndex=OctNode::CornerIndex(myCenter,position);
@@ -1095,7 +1094,7 @@ int Octree<Degree>::setTree(char* fileName,
         if(resetSamples && samplesPerNode>0 && splatDepth){
             /**     Update the normals of the node at depth defined by $samplesPerNode
              *      and nodes' weight contribution initialized  */
-            NonLinearUpdateWeightContribution(position,normal,splatDepth,samplesPerNode,1,maxDepth);
+            NonLinearSplatOrientedPoint(position,normal,splatDepth,samplesPerNode,1,maxDepth);
         }else{
 
             /**     calculate the weight $alpha */

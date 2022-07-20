@@ -970,7 +970,7 @@ void OctNode::ProcessFixedDepthNodeAdjacentNodes(OctNode* node1, const float& ra
     node2->centerAndWidth(c2,w2);
     ProcessFixedDepthNodeAdjacentNodes(c1.coords[0]-c2.coords[0],
                                        c1.coords[1]-c2.coords[1],
-                                       c1.coords[2],c2.coords[2],
+                                       c1.coords[2]-c2.coords[2],
                                        node1,radius1*w1,
                                        node2,radius2*w2,w2,
                                        depth,F,processCurrent);

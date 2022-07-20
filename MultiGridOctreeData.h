@@ -52,6 +52,7 @@ class Octree {
         void Function(OctNode* node1, OctNode* node2);
     };
 
+    /**     Use to project fixed-depth solution to neighbor nodes' children */
     class LaplacianProjectionFunction{
     public:
         double value;
@@ -61,14 +62,43 @@ class Octree {
         void Function(OctNode* node1, OctNode* node2);
     };
 
+    /**     Use to get Laplacian entries    */
     class LaplacianMatrixFunction{
     public:
         int x2,y2,z2,d2;
         Octree<Degree>* ot;
         int index[DIMENSION], scratch[DIMENSION];
         int elementCount,offset;
-        MatrixEntry<float>* rowElements;    // an array record Nth element's value
+        /**     an array record Nth element's value     */
+        MatrixEntry<float>* rowElements;
         int Function(OctNode* node1, OctNode* node2);
+    };
+
+    class RestrictedLaplacianMatrixFunction{
+    public:
+        int depth,offset[3];
+        /**     use to call GetLaplacian()   */
+        Octree<Degree>* ot;
+        float radius;
+        int index[DIMENSION], scratch[DIMENSION];
+        int elementCount;
+        MatrixEntry<float>* rowElements;
+        int Function(const OctNode* node1, const OctNode* node2);
+    };
+
+    class AdjacencyCountFunction{
+    public:
+        int adjacencyCount;
+        /**     $node2 doesn't matter   */
+        void Function(const OctNode* node1, const OctNode* node2);
+    };
+
+    class AdjacencySetFunction{
+    public:
+        int* adjacencies,adjacencyCount;
+        /**     $node2 doesn't matter   */
+        /**     Add index of node1 to adjacencies   */
+        void Function(const OctNode* node1, const OctNode* node2);
     };
 
     /**     Use to create children node     */
@@ -83,11 +113,19 @@ class Octree {
     /**     Assign matrix to be the lower triangle Laplacian matrix of all nodes with $depth    */
     int GetFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix, const int& depth, const SortedTreeNodes& sNodes);
 
+    /**     The entries is restricted in the sub-tree of restricted Node $rNode,
+     *      this will be call multiple times in SolveFixedDepthMatrix()
+     *      Get their Laplacian matrix entries.                         */
+    int GetRestrictedFixedDepthLaplacian(SparseSymmetricMatrix<float>& matrix,
+                                         const int* entries,const int& entryCount,
+                                         const OctNode* rNode,const float& radius,
+                                         const SortedTreeNodes& sNodes);
+
     /**     Use the Lx=v Solution at $depth to project fixed-depth solution back onto deeper nodes' residual    */
     int SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes);
 
-//    int SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes);
-
+    /**     Use multiple small sub-trees to solve the Lx=v      */
+    int SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes);
 
     /**     calculate the point $position contribution to node's neighbors   */
     int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);

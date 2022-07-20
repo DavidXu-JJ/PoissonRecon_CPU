@@ -1239,6 +1239,25 @@ int OctNode::CompareBackwardPointerDepths(const void* v1,const void* v2){
     return (*(const OctNode**)v2)->depth()-(*(const OctNode**)v1)->depth();
 }
 
+inline int OctNode::Overlap2(const int& depth1, const int offSet1[DIMENSION], const float& multiplier1,
+                             const int& depth2, const int offSet2[DIMENSION], const float& multiplier2)
+{
+    /**     depth1:     depth-startingDepth
+     *      depth2:     depth
+     *      offSet1:    node1's offset in GetFixedDepthLaplacian()
+     *      off1:       the node close to AdjacencySetFunction's node
+     *      multiplier1:    0.5
+     *      multiplier2:    2.001                                     */
+    int d=depth2-depth1;    //  $startingDepth in GetFixedDepthLaplacian()
+    float w=multiplier2+multiplier1*(1<<d);
+    float w2=float( (1<<(d-1)) - 0.5 );
+    if(fabs(float(offSet2[0]-(offSet1[0]<<d) ) - w2 ) >= w ||
+       fabs(float(offSet2[1]-(offSet1[1]<<d) ) - w2 ) >= w ||
+       fabs(float(offSet2[2]-(offSet1[2]<<d) ) - w2 ) >= w)
+        return 0;
+    return 1;
+}
+
 // OctNode::Neighbors
 OctNode::Neighbors::Neighbors(void) {
     clear();

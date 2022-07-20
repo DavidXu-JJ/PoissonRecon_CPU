@@ -93,7 +93,8 @@ private:
                                                    NodeAdjacencyFunction* F);
 
     /**     Used to get Laplacian matrix's entries.
-     *      Only successfully call F->Function() when two nodes is close enough and at same depth.  */
+     *      Only successfully call F->Function() when two nodes is close enough and at same depth.
+     *      node1 keeps the same, node2 will dig deeper.    */
     template<class NodeAdjacencyFunction>
     static void __ProcessTerminatingNodeAdjacentNodes(const float& dx, const float& dy, const float& dz,
                                                       OctNode* node1, const float& radius1,
@@ -293,6 +294,10 @@ public:
      *      greater depth will be sorted at front,
      *      smaller depth will be sorted at back.                       */
     static int CompareBackwardPointerDepths(const void* v1, const void* v2);
+
+    /**     Check whether these two node is close enough      */
+    static inline int Overlap2(const int& depth1, const int offSet1[DIMENSION], const float& multiplier1,
+                               const int& depth2, const int offSet2[DIMENSION], const float& multiplier2);
 
     class Neighbors{
     public:

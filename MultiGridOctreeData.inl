@@ -51,14 +51,15 @@ void SortedTreeNodes::set(OctNode& root, const bool& setIndex) {
     }
     // small depth node at front
     qsort(treeNodes,cnt,sizeof(const OctNode*),OctNode::CompareForwardPointerDepths);
-    for(i=0;i<maxDepth;++i){nodeCount[i]=0;}
+    for(i=0;i<=maxDepth;++i){nodeCount[i]=0;}
     for(i=0;i<cnt;++i){
         if(setIndex) treeNodes[i]->nodeData.nodeIndex=i;
         nodeCount[treeNodes[i]->depth()+1]++;
     }
     for(i=1;i<=maxDepth;++i)
         nodeCount[i]+=nodeCount[i-1];
-
+//    for(i=1;i<=maxDepth;++i)
+//        printf("%d\n",nodeCount[i]);
 }
 
 // Octree
@@ -242,6 +243,7 @@ template<int Degree>
 void Octree<Degree>::RefineFunction::Function(OctNode* node1,const OctNode* node2){
     if(!node1->children && node1->depth()<this->depth)
         node1->initChildren();
+//    cnt++;
 }
 
 template<int Degree>
@@ -1169,7 +1171,7 @@ void Octree<Degree>::finalize1(const int& refineNeighbors) {
             const int& idx=temp->nodeData.nodeIndex;
             const Point3D<float>& normal=(*normals)[idx];
             /**     if current node is valid    */
-            if(idx>=0 && Length(normal) > EPSILON){
+            if(idx >= 0 && Length(normal) > EPSILON){
                 rf.depth=temp->depth()-refineNeighbors;
                 /**     node1:      temp
                  *      radius1:    2*radius
@@ -1181,6 +1183,7 @@ void Octree<Degree>::finalize1(const int& refineNeighbors) {
             }
             temp=tree.nextNode(temp);
         }
+//        printf("!%d\n",rf.cnt);
     }
 }
 
@@ -1296,7 +1299,6 @@ float Octree<Degree>::GetIsoValue(void){
     cf.valueTables=fData.valueTables;
     cf.res2=fData.res2;
     myRadius=radius;
-    return isoValue/weightSum;
     isoValue=weightSum=0;
     temp=tree.nextNode();
     while(temp){
@@ -1309,6 +1311,7 @@ float Octree<Degree>::GetIsoValue(void){
             /**     For those nodes that is close to center enough,
              *      sum up (x * Fo) = (x * Fo,x * Fo,y * Fo,z)          */
             OctNode::ProcessPointAdjacentNodes(center,&tree,myRadius,&cf);
+//            printf("%f %f\n",cf.value,w);
             isoValue+=cf.value*w;
             weightSum+=w;
         }

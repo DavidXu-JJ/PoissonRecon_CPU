@@ -118,6 +118,7 @@ class Octree {
     class RefineFunction{
     public:
         int depth;
+//        int cnt=0;
         /**     Call node1->initChildren if node1->depth()<this->depth,
          *      $node2 doesn't matter   */
         void Function(OctNode* node1,const OctNode* node2);

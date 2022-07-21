@@ -264,9 +264,9 @@ void OctNode::__ProcessMaxDepthNodeAdjacentNodes(const float& dx, const float& d
         }
         if(node2->depth()<depth){
             if(o&  1) if(node2->children[0].children)
-                __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,
+                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,
                                                    &node2->children[0],radius,cWidth,
-                                                   depth,F);
+                                                       depth,F);
             if(o&  2) if(node2->children[1].children)
                     __ProcessMaxDepthNodeAdjacentNodes(dx2,dy1,dz1,node1,radius1,
                                                        &node2->children[1],radius,cWidth,
@@ -565,8 +565,6 @@ inline bool OctNode::Overlap(const float& c1, const float& c2, const float& c3, 
 
 
 inline int OctNode::ChildOverlap(const float& dx, const float& dy, const float& dz, const float& d, const float& cRadius2){
-    /**     w1:     width of node1 * 3
-     *      w2:     width of node1 * 3 + radius of node2    */
     float w1=d-cRadius2;
     float w2=d+cRadius2;
     int overlap=0;
@@ -579,7 +577,7 @@ inline int OctNode::ChildOverlap(const float& dx, const float& dy, const float& 
 
     if(!test) return 0;
     /**     -d <(dz-cRadius2)<d     */
-    if(dz < w2 && dx > -w1) test1 =test;
+    if(dz < w2 && dz > -w1) test1 =test;
     /**     -d <(dz+cRadius2)<d     */
     if(dz < w1 && dz > -w2) test1|=test<<4;
 

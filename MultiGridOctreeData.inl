@@ -344,17 +344,30 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
     /**     current process depth is fixed,
      *      extract all nodes' divergence with this depth    */
     V.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
-    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i)
-        V[i-sNodes.nodeCount[depth]]=sNodes.treeNodes[i]->nodeData.value;
+    for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i) {
+        V[i - sNodes.nodeCount[depth]] = sNodes.treeNodes[i]->nodeData.value;
+//        printf("%f\n",sNodes.treeNodes[i]->nodeData.value);
+    }
+
+
+
     /**     empty the allocator     */
     SparseSymmetricMatrix<float>::Allocator.rollBack();
     GetFixedDepthLaplacian(matrix,depth,sNodes);
+
+//    for(i=0;i<matrix.rows;++i){
+//        for(int j=0;j < matrix.rowSizes[i];++j){
+//            printf("[%d][%d]=%f\n",i,matrix.m_ppElements[i][j].N,matrix.m_ppElements[i][j].Value);
+//        }
+//    }
+
     iter+=SparseSymmetricMatrix<float>::Solve(matrix,V,
                                               int(pow(matrix.rows,ITERATION_POWER)),
                                               Solution,double(EPSILON),1);
 
     for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
         sNodes.treeNodes[i]->nodeData.value = float(Solution[i-sNodes.nodeCount[depth]]);
+//        printf("Solution:%f\n",sNodes.treeNodes[i]->nodeData.value);
     }
 
     float myRadius,myRadius1,myRadius2;
@@ -432,6 +445,7 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
             x1=int(node1->off[0]);
             y1=int(node1->off[1]);
             z1=int(node1->off[2]);
+            pf.value=Solution[idx1];
             pf.index[0]= x1 * fData.res;
             pf.index[1]= y1 * fData.res;
             pf.index[2]= z1 * fData.res;

@@ -709,7 +709,7 @@ int Octree<Degree>::NonLinearUpdateWeightContribution(OctNode* node, const Point
         for(j=0;j<3;++j){
             for(k=0;k<3;++k){
                 if(neighbors.neighbors[i][j][k])
-                    neighbors.neighbors[i][j][k]->nodeData.centerWeightContribution+=float(dx[0][i]*dx[1][j]*dx[2][k]);
+                    neighbors.neighbors[i][j][k]->nodeData.centerWeightContribution += float(dx[0][i] * dx[1][j] * dx[2][k]);
             }
         }
     }
@@ -818,6 +818,7 @@ int Octree<Degree>::NonLinearSplatOrientedPoint(OctNode* node, const Point3D<flo
                     (*normals)[idx].coords[0]+=float(normal.coords[0]*dxdydz);
                     (*normals)[idx].coords[1]+=float(normal.coords[1]*dxdydz);
                     (*normals)[idx].coords[2]+=float(normal.coords[2]*dxdydz);
+//                    printf("%lf\n",float(normal.coords[0]*dxdydz));
                 }
             }
         }
@@ -847,15 +848,15 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
     /**     reach the nearest node to $position point at splatDepth */
     while(temp->depth()<splatDepth){
         if(!temp->children){
-//            printf("Can't reach splatDepth.\nOctree<Degree>::NonLinearSplatOrientedPoint error.\n");
+            printf("Can't reach splatDepth.\nOctree<Degree>::NonLinearSplatOrientedPoint error.\n");
             return;
         }
         int cIndex=OctNode::CornerIndex(myCenter,position);
         temp=&temp->children[cIndex];
         myWidth/=2;
         for(i=0;i<DIMENSION;++i){
-            if(cIndex & (1<<DIMENSION)) myCenter.coords[i]+=myWidth/2;
-            else                        myCenter.coords[i]-=myWidth/2;
+            if(cIndex & (1<<i)) myCenter.coords[i]+=myWidth/2;
+            else                myCenter.coords[i]-=myWidth/2;
         }
     }
 
@@ -886,8 +887,8 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
         temp=&temp->children[cIndex];
         myWidth/=2;
         for(i=0;i<DIMENSION;++i){
-            if(cIndex & (1<<DIMENSION)) myCenter.coords[i]+=myWidth/2;
-            else                        myCenter.coords[i]-=myWidth/2;
+            if(cIndex & (1<<i)) myCenter.coords[i]+=myWidth/2;
+            else                myCenter.coords[i]-=myWidth/2;
         }
     }
 
@@ -895,8 +896,8 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
     width=1.0/(1<<temp->depth());
     for(i=0;i<DIMENSION;++i) {
         n.coords[i] = normal.coords[i] * alpha
-                      / float(pow(width, 3)
-                      * float(dx));
+                      / float(pow(width, 3))
+                      * float(dx);
     }
 
     /**     update the contribution to normals[temp] at $topDepth   */
@@ -904,7 +905,7 @@ void Octree<Degree>::NonLinearSplatOrientedPoint(const Point3D<float>& position,
     /**     In case that newDepth is between [topDepth-1, topDepth],
      *      update the contribution to normals[temp->parent] at $topDepth-1 */
     if(fabs(1.0-dx)>EPSILON){
-        dx=float(1.0/dx);
+        dx=float(1.0-dx);
         temp=temp->parent;
         width=1.0/(1<<temp->depth());
 

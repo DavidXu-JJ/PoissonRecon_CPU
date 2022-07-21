@@ -653,7 +653,7 @@ bool OctNode::initChildren() {
                 off2[0]=(off1[0]<<1)+i;
                 off2[1]=(off1[1]<<1)+j;
                 off2[2]=(off1[2]<<1)+k;
-                Index(d+1,off2,children[idx].d,children[idx].off);
+                Index(d1+1,off2,children[idx].d,children[idx].off);
             }
         }
     }

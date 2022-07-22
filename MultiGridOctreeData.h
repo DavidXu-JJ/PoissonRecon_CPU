@@ -270,7 +270,7 @@ public:
     /**     Get iso-value from all nodes */
     float GetIsoValue(void);
 
-//    void GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso=0);
+    void GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso=0);
 };
 
 #include "MultiGridOctreeData.inl"

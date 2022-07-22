@@ -11,7 +11,7 @@ const float EPSILON=float(1e-6);
 const float ROUND_EPS=float(1e-5);
 
 // VertexData
-long long EdgeIndex(const OctNode* node,const int& eIndex,const int& maxDepth,int idx[DIMENSION]){
+long long VertexData::EdgeIndex(const OctNode* node,const int& eIndex,const int& maxDepth,int idx[DIMENSION]){
     int o,i1,i2;
     int d,off[3];
     node->depthAndOffset(d,off);
@@ -851,6 +851,7 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
                        cornerValues,
                        sizeof(float) * Cube::CORNERS);
             }
+            printf("%d\n",temp->depth());
             temp=sNodes->treeNodes[i]->nextLeaf(temp);
         }
         values.clear();
@@ -1062,8 +1063,8 @@ void Octree<Degree>::Subdivide(OctNode* node,const float& isoValue,const int& ma
         Cube::FactorFaceIndex(i,dir,offset);
         cf.value=0;
         VertexData::FaceIndex(node,i,maxDepth,cf.index);
-        for(i=0;i<DIMENSION;++i)
-            position.coords[i]=BinaryNode<float>::CornerIndexPosition(cf.index[i],maxDepth+1);
+        for(j=0;j<DIMENSION;++j)
+            position.coords[j]=BinaryNode<float>::CornerIndexPosition(cf.index[j],maxDepth+1);
         OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
         value=cf.value;
         Cube::FaceCorners(i,c[0],c[1],c[2],c[3]);
@@ -1078,8 +1079,8 @@ void Octree<Degree>::Subdivide(OctNode* node,const float& isoValue,const int& ma
         Cube::FactorEdgeIndex(i,o,i1,i2);
         cf.value=0;
         VertexData::EdgeIndex(node,i,maxDepth,cf.index);
-        for(i=0;i<DIMENSION;++i)
-            position.coords[i]=BinaryNode<float>::CornerIndexPosition(cf.index[i],maxDepth+1);
+        for(j=0;j<DIMENSION;++j)
+            position.coords[j]=BinaryNode<float>::CornerIndexPosition(cf.index[j],maxDepth+1);
         OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
         value=cf.value;
         Cube::EdgeIndex(i,c[0],c[1]);
@@ -1848,16 +1849,16 @@ float Octree<Degree>::GetIsoValue(void){
     return isoValue/weightSum;
 }
 
-//template<int Degree>
-//void Octree<Degree>::GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso){
-//    double t;
-//    OctNode* temp;
-//    SortedTreeLeaves sLeaves;
-//
-//    unordered_map<long long,int> roots;
-//    unordered_map<long long,Point3D<float> > *normalHash=new unordered_map<long long,Point3D<float> >();
-//
-//    SetIsoSurfaceCorners(isoValue,0,fullDepthIso);
-//
-//}
+template<int Degree>
+void Octree<Degree>::GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso){
+    double t;
+    OctNode* temp;
+    SortedTreeLeaves sLeaves;
+
+    unordered_map<long long,int> roots;
+    unordered_map<long long,Point3D<float> > *normalHash=new unordered_map<long long,Point3D<float> >();
+
+    SetIsoSurfaceCorners(isoValue,0,fullDepthIso);
+
+}
 

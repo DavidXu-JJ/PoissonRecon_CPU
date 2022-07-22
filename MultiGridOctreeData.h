@@ -35,6 +35,17 @@ public:
     void set(OctNode& root, const bool& setIndex);
 };
 
+/**     Similar to class SortedTreeNodes, sort in descending depth order     */
+class SortedTreeLeaves{
+public:
+    OctNode** treeLeaves;
+    int leafCount;
+    SortedTreeLeaves(void);
+    ~SortedTreeLeaves(void);
+    void set(OctNode& root);
+    void set(OctNode& root,const int& maxDepth);
+};
+
 template<int Degree>
 class Octree {
     OctNode::NeighborKey neighborKey;
@@ -222,7 +233,10 @@ public:
      *      solution of surface function = sum(Fo * x), o in every node   */
     int LaplacianMatrixIteration(const int& subdivideDepth);
 
+    /**     Get iso-value from all nodes */
     float GetIsoValue(void);
+
+    void GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso=0);
 };
 
 #include "MultiGridOctreeData.inl"

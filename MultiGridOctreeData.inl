@@ -62,6 +62,44 @@ void SortedTreeNodes::set(OctNode& root, const bool& setIndex) {
 //        printf("%d\n",nodeCount[i]);
 }
 
+// SortedTreeLeaves
+
+SortedTreeLeaves::SortedTreeLeaves(void){
+    treeLeaves=NULL;
+}
+
+SortedTreeLeaves::~SortedTreeLeaves(void){
+    if(treeLeaves) delete [] treeLeaves;
+}
+
+void SortedTreeLeaves::set(OctNode& root){
+    if(treeLeaves) delete [] treeLeaves;
+    leafCount = root.leaves();
+    treeLeaves=new OctNode*[leafCount];
+
+    OctNode* temp=root.nextLeaf();
+    int cnt=0;
+    while(temp){
+        treeLeaves[cnt++] = temp;
+        temp = root.nextLeaf(temp);
+    }
+    qsort(treeLeaves,cnt,sizeof(const OctNode*),OctNode::CompareBackwardPointerDepths);
+}
+
+void SortedTreeLeaves::set(OctNode& root,const int& maxDepth){
+    if(treeLeaves) delete [] treeLeaves;
+    leafCount = root.leaves();
+    treeLeaves=new OctNode*[leafCount];
+
+    OctNode* temp=root.nextLeaf();
+    int cnt=0;
+    while(temp){
+        if(temp->depth()<=maxDepth) treeLeaves[cnt++] = temp;
+        temp = root.nextLeaf(temp);
+    }
+    qsort(treeLeaves,cnt,sizeof(const OctNode*),OctNode::CompareBackwardPointerDepths);
+}
+
 // Octree
 template<int Degree>
 float Octree<Degree>::GetLaplacian(const int idx[DIMENSION]) const
@@ -1333,3 +1371,11 @@ float Octree<Degree>::GetIsoValue(void){
     }
     return isoValue/weightSum;
 }
+
+template<int Degree>
+void Octree<Degree>::GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso){
+    double t;
+    OctNode* temp;
+
+}
+

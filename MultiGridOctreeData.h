@@ -172,6 +172,8 @@ class Octree {
 
     void PreValidate(const float& isoValue,const int& maxDepth,const int& subdivideDepth);
 
+    void Validate(OctNode* node,const float& isoValue,const int& maxDepth,const int& fullDepthIso,const int& subdivideDepth);
+
     /**     Subdivide the tree by multiple checks   */
     void Validate(OctNode* node,const float& isoValue,const int& maxDepth,const int& fullDepthIso);
 

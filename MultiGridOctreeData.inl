@@ -828,6 +828,34 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int subdiv
         }
     }
 
+    for(i=sNodes->nodeCount[subdivisionDepth];i<sNodes->nodeCount[subdivisionDepth+1];++i){
+        temp=sNodes->treeNodes[i]->nextLeaf();
+        while(temp){
+            /**     assign the corner value of a leaf node with depth >= subdivisionDepth   */
+            for(j=0;j<Cube::CORNERS;++j){
+                key=VertexData::CornerIndex(temp,j,fData.depth,cf.index);
+                if(values.find(key)!=values.end())
+                    cornerValues[j]=values[key];
+                else{
+                    cf.value=0;
+                    for(int k=0;k<DIMENSION;++k)
+                        position.coords[k]=BinaryNode<float>::CornerIndexPosition(cf.index[k],fData.depth+1);
+                    OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
+                    values[key]=cf.value;
+                    cornerValues[j]=cf.value;
+                }
+            }
+            if(temp->depth()<fData.depth || MarchingCubes::HasRoots(cornerValues,isoValue)){
+                temp->nodeData.isoNode=new IsoNodeData();
+                memcpy(temp->nodeData.isoNode->cornerValues,
+                       cornerValues,
+                       sizeof(float) * Cube::CORNERS);
+            }
+            temp=sNodes->treeNodes[i]->nextLeaf(temp);
+        }
+        values.clear();
+    }
+
     delete sNodes;
 
     if(subdivisionDepth){
@@ -836,7 +864,8 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int subdiv
 
     temp=tree.nextLeaf();
     while(temp){
-        Validate(temp,isoValue,fData.depth,fullDepthIso);
+        if(subdivisionDepth) Validate(temp,isoValue,fData.depth,fullDepthIso,subdivisionDepth);
+        else                 Validate(temp,isoValue,fData.depth,fullDepthIso);
         temp=tree.nextLeaf(temp);
     }
 
@@ -886,6 +915,56 @@ void Octree<Degree>::PreValidate(const float& isoValue,const int& maxDepth,const
     while(temp){
         PreValidate(temp,isoValue,maxDepth,subdivideDepth);
         temp=tree.nextLeaf(temp);
+    }
+}
+
+template<int Degree>
+void Octree<Degree>::Validate(OctNode* node,const float& isoValue,const int& maxDepth,const int& fullDepthIso,const int& subdivideDepth){
+    int i,sub=0;
+    OctNode* treeNode=node;
+    OctNode* neighbor;
+    if(node->depth()>=maxDepth){return;}
+
+    // Check if full-depth extraction is enabled and we have an iso-node that is not at maximum depth
+    if(!sub && fullDepthIso && MarchingCubes::HasRoots(node->nodeData.isoNode->cornerValues,isoValue))
+        sub=1;
+
+    // Check if the node has faces that are ambiguous and are adjacent to finer neighbors
+    for(i=0;i<Cube::NEIGHBORS && !sub;i++){
+        neighbor=treeNode->faceNeighbor(i);
+        if(neighbor && neighbor->children)
+            if(MarchingCubes::IsAmbiguous(node->nodeData.isoNode->cornerValues,isoValue,i) ||
+            IsBoundaryFace(node,i,subdivideDepth))
+            sub=1;
+    }
+
+    // Check if the node has edges with more than one root
+    for(i=0;i<Cube::EDGES && !sub;i++)
+        if(EdgeRootCount(node,i,isoValue,maxDepth)>1)
+            sub=1;
+
+    for(i=0;i<Cube::NEIGHBORS && !sub;i++){
+        neighbor=node->faceNeighbor(i);
+        if(	neighbor && neighbor->children &&
+               !MarchingCubes::HasRoots(node->nodeData.isoNode->cornerValues,isoValue,i) &&
+               InteriorFaceRootCount(neighbor,Cube::FaceReflectFaceIndex(i,i),isoValue,maxDepth))
+            sub=1;
+    }
+    if(sub){
+        Subdivide(node,isoValue,maxDepth);
+        for(i=0;i<Cube::NEIGHBORS;i++){
+            neighbor=treeNode->faceNeighbor(i);
+            if(neighbor && !neighbor->children)
+                Validate(neighbor,isoValue,maxDepth,fullDepthIso,subdivideDepth);
+        }
+        for(i=0;i<Cube::EDGES;i++){
+            neighbor=treeNode->edgeNeighbor(i);
+            if(neighbor && !neighbor->children)
+                Validate(neighbor,isoValue,maxDepth,fullDepthIso,subdivideDepth);
+        }
+        for(i=0;i<Cube::CORNERS;i++)
+            if(!node->children[i].children)
+                Validate(&node->children[i],isoValue,maxDepth,fullDepthIso,subdivideDepth);
     }
 }
 

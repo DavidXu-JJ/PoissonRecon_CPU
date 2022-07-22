@@ -43,12 +43,10 @@ public:
 class NodeData{
 public:
     static int UseIndex;
-    union{
-        IsoNodeData isoNode;
-        struct{
-            int nodeIndex;
-            float centerWeightContribution;
-        };
+    IsoNodeData* isoNode;
+    struct{
+        int nodeIndex;
+        float centerWeightContribution;
     };
     float value;
 

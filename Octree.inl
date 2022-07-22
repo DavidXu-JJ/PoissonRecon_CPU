@@ -52,13 +52,17 @@ NodeData::NodeData(void)
     if(UseIndex) {
         nodeIndex=-1;
         centerWeightContribution=0;
+        isoNode=NULL;
     } else {
-        isoNode=IsoNodeData();
+        isoNode=new IsoNodeData();
     }
     value=0;
 }
 
-NodeData::~NodeData() {}
+NodeData::~NodeData() {
+    if(isoNode) delete isoNode;
+    isoNode=NULL;
+}
 
 // OctNode private member
 
@@ -97,7 +101,7 @@ void OctNode::__ProcessNodeAdjacentNodes(const float& dx, const float& dy, const
 
     /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
      *      radius1:    1.4449  * width
-     *      radius2:    0.9999  * width
+     *      radius2:    1.0001  * width
      *      width2:     radius = width / 2                      */
 
     /**     $cWidth takes half of node2's radius because it's convenient to
@@ -884,7 +888,7 @@ void OctNode::ProcessNodeAdjacentNodes(const float& dx, const float& dy, const f
 
     /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
      *      radius1:    1.4449  * width
-     *      radius2:    0.9999  * width
+     *      radius2:    1.0001  * width
      *      width2:     width                        */
     if(!Overlap(dx,dy,dz,radius1+radius2)) return;
     if(processCurrent) F->Function(node2,node1);
@@ -897,7 +901,7 @@ void OctNode::ProcessNodeAdjacentNodes(const float& dx, const float& dy, const f
 
     /**     SolveFixedDepthMatrix(): LaplacianProjectionFunction
      *      radius1:    1.4449  * width
-     *      radius2:    0.9999  * width
+     *      radius2:    1.0001  * width
      *      width2:     radius = width / 2                      */
     __ProcessNodeAdjacentNodes(-dx,-dy,-dz,node1,radius1,node2,radius2,width2/2,F);
 }

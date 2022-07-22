@@ -11,6 +11,11 @@ using std::unordered_map;
 
 class VertexData {
 public:
+
+    static long long EdgeIndex(const OctNode* node,const int& eIndex,const int& maxDepth,int index[DIMENSION]);
+
+    static long long FaceIndex(const OctNode* node,const int& fIndex,const int& maxDepth,int index[DIMENSION]);
+
     /**     Assume the maxDepth is set,
      *      then the resolution of valueTable is (1<<maxDepth+1).
      *      Assign $index with the index of $node's center in fData's valueTable.
@@ -18,6 +23,8 @@ public:
      *      equals fData.baseFunctions[off](index[i]).           */
     static long long CenterIndex(const OctNode* node, const int& maxDepth, int index[DIMENSION]);
 
+    /**     Similar to CenterIndex()    */
+    static long long CornerIndex(const OctNode* node, const int& cIndex, const int& maxDepth, int index[DIMENSION]);
 };
 
 class SortedTreeNodes {
@@ -106,6 +113,7 @@ class Octree {
         double* valueTables;
         int index[DIMENSION];
         float value;
+//        int cnt=0;
         /**     calculate $node in which iso-value surface   */
         void Function(const OctNode* node);
     };
@@ -146,11 +154,35 @@ class Octree {
                                          const OctNode* rNode,const float& radius,
                                          const SortedTreeNodes& sNodes);
 
+
     /**     Use the Lx=v Solution at $depth to project fixed-depth solution back onto deeper nodes' residual    */
     int SolveFixedDepthMatrix(const int& depth, const SortedTreeNodes& sNodes);
 
     /**     Use multiple small sub-trees to solve the Lx=v      */
     int SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes);
+
+    /**     Split the cube based on cornerValues,
+     *      make the complicated node splits into small cubes.  */
+    void SetIsoSurfaceCorners(const float& isoValue,const int subdivisionDepth,const int& fullDepthIso);
+
+    /**     check if the face of node is on the boundary face at subdivideDepth */
+    static int IsBoundaryFace(const OctNode* node,const int& faceIndex,const int& subdivideDepth);
+
+    void PreValidate(OctNode* node,const float& isoValue,const int& maxDepth,const int& subdivideDepth);
+
+    void PreValidate(const float& isoValue,const int& maxDepth,const int& subdivideDepth);
+
+    /**     Subdivide the tree by multiple checks   */
+    void Validate(OctNode* node,const float& isoValue,const int& maxDepth,const int& fullDepthIso);
+
+    /**     Subdivide and delete $node.nodeData.isoData.cornerValues,
+     *      eight children are assigned their own cornerValues. */
+    void Subdivide(OctNode* node,const float& isoValue,const int& maxDepth);
+
+    static int InteriorFaceRootCount(const OctNode* node,const int& faceIndex,const float& isoValue,const int maxDepth);
+
+    /**     Count the edge root on neighbor cube        */
+    static int EdgeRootCount(const OctNode* node,const int& edgeIndex,const float& isoValue,const int& maxDepth);
 
     /**     calculate the point $position contribution to node's neighbors   */
     int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);
@@ -236,7 +268,7 @@ public:
     /**     Get iso-value from all nodes */
     float GetIsoValue(void);
 
-    void GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso=0);
+//    void GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh,const int& fullDepthIso=0);
 };
 
 #include "MultiGridOctreeData.inl"

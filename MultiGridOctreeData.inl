@@ -780,7 +780,7 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
 }
 
 template<int Degree>
-void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int subdivisionDepth,const int& fullDepthIso){
+void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdivisionDepth,const int& fullDepthIso){
     int i,j;
     unordered_map<long long, float> values;
     float cornerValues[Cube::CORNERS];

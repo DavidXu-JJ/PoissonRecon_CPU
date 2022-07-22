@@ -163,7 +163,7 @@ class Octree {
 
     /**     Split the cube based on cornerValues,
      *      make the complicated node splits into small cubes.  */
-    void SetIsoSurfaceCorners(const float& isoValue,const int subdivisionDepth,const int& fullDepthIso);
+    void SetIsoSurfaceCorners(const float& isoValue,const int& subdivisionDepth,const int& fullDepthIso);
 
     /**     check if the face of node is on the boundary face at subdivideDepth */
     static int IsBoundaryFace(const OctNode* node,const int& faceIndex,const int& subdivideDepth);

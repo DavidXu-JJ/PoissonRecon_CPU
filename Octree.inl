@@ -19,7 +19,7 @@ IsoNodeData::~IsoNodeData() {;}
 
 inline int IsoNodeData::edgeCount(const int& faceIndex) const
 {
-    return (eSegmentCount >> (faceIndex*2) & 3);
+    return (eSegmentCount >> (faceIndex*2) ) & 3;
 }
 
 inline int IsoNodeData::edgeIndex(const int& faceIndex,
@@ -1418,7 +1418,7 @@ bool OctNode::CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode
         case 0: dir[0]=1;   dir[1]=2;   break;
         case 1: dir[0]=0;   dir[1]=2;   break;
         case 2: dir[0]=0;   dir[1]=1;   break;
-    }
+    };
     int d1,d2,off1[3],off2[3];
     node1->depthAndOffset(d1,off1);
     node2->depthAndOffset(d2,off2);
@@ -1432,13 +1432,11 @@ bool OctNode::CommonEdge(const OctNode* node1, const int& eIndex1, const OctNode
     idx2[1]=off2[dir[1]]+(1<<d2)+j2;
 
     if(d1>d2){
-        for(int & i : idx2){
-            i<<=(d1-d2);
-        }
+        idx2[0]<<=(d1-d2);
+        idx2[1]<<=(d1-d2);
     }else{
-        for(int & i : idx1){
-            i<<=(d2-d1);
-        }
+        idx1[0]<<=(d2-d1);
+        idx1[1]<<=(d2-d1);
     }
     if(idx1[0]==idx2[0] && idx1[1]==idx2[1])
         return true;
@@ -1460,7 +1458,18 @@ int OctNode::CompareForwardPointerDepths(const void* v1,const void* v2){
 }
 
 int OctNode::CompareBackwardPointerDepths(const void* v1,const void* v2){
-    return (*(const OctNode**)v2)->depth()-(*(const OctNode**)v1)->depth();
+    const OctNode *n1,*n2;
+    n1=(*(const OctNode**)v1);
+    n2=(*(const OctNode**)v2);
+    if(n1->d!=n2->d){return -(int(n1->d)-int(n2->d));}
+    while(n1->parent != n2->parent){
+        n1=n1->parent;
+        n2=n2->parent;
+    }
+    if(n1->off[0]!=n2->off[0]){return -(int(n1->off[0])-int(n2->off[0]));}
+    if(n1->off[1]!=n2->off[1]){return -(int(n1->off[1])-int(n2->off[1]));}
+    return -(int(n1->off[2])-int(n2->off[2]));
+//    return (*(const OctNode**)v2)->depth()-(*(const OctNode**)v1)->depth();
 }
 
 inline int OctNode::Overlap2(const int& depth1, const int offSet1[DIMENSION], const float& multiplier1,

@@ -118,6 +118,16 @@ class Octree {
         void Function(const OctNode* node);
     };
 
+    class PointIndexNormalFunction{
+    public:
+        int res2;
+        double* valueTables;
+        double* dValueTables;
+        Point3D<float> normal;
+        int index[DIMENSION];
+        void Function(const OctNode* node);
+    };
+
     class AdjacencyCountFunction{
     public:
         int adjacencyCount;
@@ -168,6 +178,10 @@ class Octree {
     /**     check if the face of node is on the boundary face at subdivideDepth */
     static int IsBoundaryFace(const OctNode* node,const int& faceIndex,const int& subdivideDepth);
 
+    static int IsBoundaryEdge(const OctNode* node,const int& edgeIndex,const int& subdivideDepth);
+
+    static int IsBoundaryEdge(const OctNode* node,const int& dir,const int& x,const int& y,const int& subdivideDepth);
+
     void PreValidate(OctNode* node,const float& isoValue,const int& maxDepth,const int& subdivideDepth);
 
     void PreValidate(const float& isoValue,const int& maxDepth,const int& subdivideDepth);
@@ -181,10 +195,60 @@ class Octree {
      *      eight children are assigned their own cornerValues. */
     void Subdivide(OctNode* node,const float& isoValue,const int& maxDepth);
 
+    /**     push root point into the $mesh  */
+    int SetMCRootPositions(OctNode* node,const int& sDepth,const float& isoValue,
+                           unordered_map<long long,int>& boundaryRoots,
+                           unordered_map<long long,int>* interiorRoots,
+                           unordered_map<long long,Point3D<float> >& boundaryNormalHash,
+                           unordered_map<long long,Point3D<float> >* interiorNormalHash,
+                           std::vector<Point3D<float> >* interiorPositions,
+                           CoredMeshData* mesh,
+                           const int& nonLinearFit);
+
+    int GetMCIsoTriangles(OctNode* node,CoredMeshData* mesh,
+                          unordered_map<long long,int>& boundaryRoots,
+                          unordered_map<long long,int>* interiorRoots,
+                          std::vector<Point3D<float> >* interiorPositions,
+                          const int& offSet,
+                          const int& sDepth);
+
+    static int AddTriangles(CoredMeshData* mesh,std::vector<CoredPointIndex> edges[3],std::vector<Point3D<float> >* interiorPositions,const int& offSet);
+    static int AddTriangles(CoredMeshData* mesh,std::vector<CoredPointIndex> edges,std::vector<Point3D<float> >* interiorPositions,const int& offSet);
+
+
+    static int SetMCFaceCurve(OctNode* node,
+                              const int& edgeIndex1,const int& edgeIndex2,
+                              const int& maxDepth,
+                              std::vector<CoredPointIndex>& curve,
+                              std::vector<Point3D<float> >& boundaryPositions,
+                              unordered_map<long long,int>& boundaryRoots,
+                              std::vector<Point3D<float> >* interiorPositions,
+                              const int& offSet,
+                              unordered_map<long long,int>* interiorRoots,
+                              const int& sDepth);
+
     static int InteriorFaceRootCount(const OctNode* node,const int& faceIndex,const float& isoValue,const int maxDepth);
 
     /**     Count the edge root on neighbor cube        */
     static int EdgeRootCount(const OctNode* node,const int& edgeIndex,const float& isoValue,const int& maxDepth);
+
+    int GetRoot(const OctNode* node,const int& edgeIndex,const float& isoValue,const int& maxDepth,
+                Point3D<float>& position,
+                unordered_map<long long,Point3D<float> >& normalHash,
+                Point3D<float>* normal,
+                const int& nonLinearFit);
+
+    /**     $position will be the position of the root on $edgeIndex in $node   */
+    int GetRoot(const OctNode* node,const int& edgeIndex,const float* cValues,const float& isoValue,
+                Point3D<float>& position,
+                unordered_map<long long,Point3D<float> >& normalHash,
+                const int& nonLinearFit);
+
+    static int GetRootIndex(const OctNode* node,const int& edgeIndex,const float& isoValue,const int& maxDepth,int eIndex[2],int& offset);
+
+    static int GetRootIndex(const OctNode* node,const int& edgeIndex,const int& maxDepth,const int& sDepth,int eIndex[2],int& offset);
+
+    static int GetRootIndex(const OctNode* node,const int& edgeIndex,const int& maxDepth,int eIndex[2],int& offset);
 
     /**     calculate the point $position contribution to node's neighbors   */
     int NonLinearUpdateWeightContribution(OctNode* node, const Point3D<float>& position);

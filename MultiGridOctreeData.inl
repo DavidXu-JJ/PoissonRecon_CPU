@@ -834,6 +834,10 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
             /**     assign the corner value of a leaf node with depth >= subdivisionDepth   */
             for(j=0;j<Cube::CORNERS;++j){
                 key=VertexData::CornerIndex(temp,j,fData.depth,cf.index);
+//                for(int k=0;k<3;++k){
+//                    printf("%d ",cf.index[k]);
+//                }
+//                printf("\n%lld\n",key);
                 if(values.find(key)!=values.end())
                     cornerValues[j]=values[key];
                 else{
@@ -842,6 +846,7 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
                         position.coords[k]=BinaryNode<float>::CornerIndexPosition(cf.index[k],fData.depth+1);
                     OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
                     values[key]=cf.value;
+//                    printf("%f\n",cf.value);
                     cornerValues[j]=cf.value;
                 }
             }
@@ -851,7 +856,7 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
                        cornerValues,
                        sizeof(float) * Cube::CORNERS);
             }
-            printf("%d\n",temp->depth());
+//            printf("%d\n",temp->depth());
             temp=sNodes->treeNodes[i]->nextLeaf(temp);
         }
         values.clear();
@@ -1083,7 +1088,7 @@ void Octree<Degree>::Subdivide(OctNode* node,const float& isoValue,const int& ma
             position.coords[j]=BinaryNode<float>::CornerIndexPosition(cf.index[j],maxDepth+1);
         OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
         value=cf.value;
-        Cube::EdgeIndex(i,c[0],c[1]);
+        Cube::EdgeCorners(i,c[0],c[1]);
         f=Cube::FaceIndex(o,0);
         for(j=0;j<2;++j)
             cornerValues2[c[j]][Cube::FaceReflectCornerIndex(c[j],f)]=value;

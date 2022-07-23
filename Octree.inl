@@ -457,6 +457,93 @@ void OctNode::__ProcessPointAdjacentNodes(const float& dx,const float& dy,const 
     }
 }
 
+template<class PointAdjacencyFunction>
+void OctNode::__ProcessPointAdjacentNodes(const float& dx,const float& dy,const float& dz,
+                                          const float& radius1,
+                                          OctNode* node2,const float& radius2,const float& cWidth2,
+                                          PointAdjacencyFunction* F)
+{
+    /**     $cWidth takes half of node2's radius because it's convenient to
+     *      move the center position to generate new (dx, dy, dz).
+     *      Another half of node2's radius is offset by $radius.    */
+    float cWidth=cWidth2/2;
+    float radius=radius2/2;
+
+    int o=ChildOverlap(dx,dy,dz,radius1+radius,cWidth);
+    if(o){
+        float dx1=dx-cWidth;
+        float dx2=dx+cWidth;
+        float dy1=dy-cWidth;
+        float dy2=dy+cWidth;
+        float dz1=dz-cWidth;
+        float dz2=dz+cWidth;
+        if(o&  1){
+            F->Function(&node2->children[0]);
+            if(node2->children[0].children)
+                __ProcessPointAdjacentNodes(dx1,dy1,dz1,
+                                            radius1,
+                                            &node2->children[0],radius,
+                                            cWidth,F);
+        }
+        if(o&  2){
+            F->Function(&node2->children[1]);
+            if(node2->children[1].children)
+                __ProcessPointAdjacentNodes(dx2,dy1,dz1,
+                                            radius1,
+                                            &node2->children[1],radius,
+                                            cWidth,F);
+        }
+        if(o&  4){
+            F->Function(&node2->children[2]);
+            if(node2->children[2].children)
+                __ProcessPointAdjacentNodes(dx1,dy2,dz1,
+                                            radius1,
+                                            &node2->children[2],radius,
+                                            cWidth,F);
+        }
+        if(o&  8){
+            F->Function(&node2->children[3]);
+            if(node2->children[3].children)
+                __ProcessPointAdjacentNodes(dx2,dy2,dz1,
+                                            radius1,
+                                            &node2->children[3],radius,
+                                            cWidth,F);
+        }
+        if(o& 16){
+            F->Function(&node2->children[4]);
+            if(node2->children[4].children)
+                __ProcessPointAdjacentNodes(dx1,dy1,dz2,
+                                            radius1,
+                                            &node2->children[4],radius,
+                                            cWidth,F);
+        }
+        if(o& 32){
+            F->Function(&node2->children[5]);
+            if(node2->children[5].children)
+                __ProcessPointAdjacentNodes(dx2,dy1,dz2,
+                                            radius1,
+                                            &node2->children[5],radius,
+                                            cWidth,F);
+        }
+        if(o& 64){
+            F->Function(&node2->children[6]);
+            if(node2->children[6].children)
+                __ProcessPointAdjacentNodes(dx1,dy2,dz2,
+                                            radius1,
+                                            &node2->children[6],radius,
+                                            cWidth,F);
+        }
+        if(o&128){
+            F->Function(&node2->children[7]);
+            if(node2->children[7].children)
+                __ProcessPointAdjacentNodes(dx2,dy2,dz2,
+                                            radius1,
+                                            &node2->children[7],radius,
+                                            cWidth,F);
+        }
+    }
+}
+
 const OctNode* OctNode::__faceNeighbor(const int& dir,const int& off) const{
     if(!parent) return NULL;    // there is no neighbor outside this node
     int pIndex=int(this-parent->children);  //get its children index
@@ -1113,6 +1200,35 @@ void OctNode::ProcessPointAdjacentNodes(const Point3D<float>& center1,
                               center1.coords[2]-c2.coords[2],
                               node2,radius2*w2,w2,
                               F,processCurrent);
+}
+
+template<class PointAdjacencyFunction>
+void OctNode::ProcessPointAdjacentNodes(const float& dx,const float& dy,const float& dz,
+                                        const float& radius1,
+                                        OctNode* node2,const float& radius2,const float& width2,
+                                        PointAdjacencyFunction* F,const int& processCurrent)
+{
+    if(!Overlap(dx,dy,dz,radius1+radius2)) return;
+    if(processCurrent) F->Function(node2);
+    if(!node2->children) return;
+    __ProcessPointAdjacentNodes(-dx,-dy,-dz,radius1,node2,radius2,width2/2,F);
+}
+
+template<class PointAdjacencyFunction>
+void OctNode::ProcessPointAdjacentNodes(const Point3D<float>& center1, const float& radius1,
+                                        OctNode* node2, const float& radius2,
+                                        PointAdjacencyFunction* F, const int& processCurrent)
+{
+    Point3D<float> c2;
+    float w2;
+    node2->centerAndWidth(c2,w2);
+    ProcessPointAdjacentNodes(center1.coords[0]-c2.coords[0],
+                              center1.coords[1]-c2.coords[1],
+                              center1.coords[2]-c2.coords[2],
+                              radius1,
+                              node2,radius2*w2,w2,
+                              F,processCurrent);
+
 }
 
 int OctNode::CornerIndex(const Point3D<float>& center,const Point3D<float>& p) {

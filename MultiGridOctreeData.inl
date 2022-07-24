@@ -1044,7 +1044,7 @@ void Octree<Degree>::Validate(OctNode* node,const float& isoValue,const int& max
         }
         for(i=0;i<Cube::CORNERS;++i){
             if(!node->children[i].children)
-                Validate(&neighbor->children[i],isoValue,maxDepth,fullDepthIso);
+                Validate(&node->children[i],isoValue,maxDepth,fullDepthIso);
         }
     }
 

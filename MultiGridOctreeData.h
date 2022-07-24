@@ -5,7 +5,8 @@
 #ifndef PRACTICE_MULTIGRIDOCTREEDATA_H
 #define PRACTICE_MULTIGRIDOCTREEDATA_H
 
-
+#include "FunctionData.h"
+#include "SparseMatrix.h"
 #include <unordered_map>
 using std::unordered_map;
 
@@ -113,7 +114,6 @@ class Octree {
         double* valueTables;
         int index[DIMENSION];
         float value;
-//        int cnt=0;
         /**     calculate $node in which iso-value surface   */
         void Function(const OctNode* node);
     };
@@ -147,7 +147,6 @@ class Octree {
     class RefineFunction{
     public:
         int depth;
-//        int cnt=0;
         /**     Call node1->initChildren if node1->depth()<this->depth,
          *      $node2 doesn't matter   */
         void Function(OctNode* node1,const OctNode* node2);

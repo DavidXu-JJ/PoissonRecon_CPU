@@ -102,12 +102,9 @@ void SortedTreeNodes::set(OctNode& root, const bool& setIndex) {
     }
     for(i=1;i<=maxDepth;++i)
         nodeCount[i]+=nodeCount[i-1];
-//    for(i=1;i<=maxDepth;++i)
-//        printf("%d\n",nodeCount[i]);
 }
 
 // SortedTreeLeaves
-
 SortedTreeLeaves::SortedTreeLeaves(void){
     treeLeaves=NULL;
 }
@@ -305,18 +302,9 @@ int Octree<Degree>::RestrictedLaplacianMatrixFunction::Function(const OctNode* n
 // PointIndexValueFunction
 template<int Degree>
 void Octree<Degree>::PointIndexValueFunction::Function(const OctNode *node) {
-//    cnt++;
     int idx[DIMENSION];
     for(int i=0;i<3;++i)
         idx[i]=index[i]+int(node->off[i])*res2;
-
-//    for(int i=0;i<3;++i){
-//        printf("index[%d]:%d\n",i,index[i]);
-//    }
-//    for(int i=0;i<3;++i){
-//        printf("off[%d]:%d\n",i,node->off[i]);
-//    }
-//    printf("%f,%f\n",node->nodeData.value,float(valueTables[idx[0]] * valueTables[idx[1]] * valueTables[idx[2]]));
 
     /**     Fo = Fo,x * Fo,y * Fo,z     */
     value += node->nodeData.value * float(valueTables[idx[0]] * valueTables[idx[1]] * valueTables[idx[2]]);
@@ -452,7 +440,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
     V.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
     for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i) {
         V[i - sNodes.nodeCount[depth]] = sNodes.treeNodes[i]->nodeData.value;
-//        printf("%f\n",sNodes.treeNodes[i]->nodeData.value);
     }
 
 
@@ -461,11 +448,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
     SparseSymmetricMatrix<float>::Allocator.rollBack();
     GetFixedDepthLaplacian(matrix,depth,sNodes);
 
-//    for(i=0;i<matrix.rows;++i){
-//        for(int j=0;j < matrix.rowSizes[i];++j){
-//            printf("[%d][%d]=%f\n",i,matrix.m_ppElements[i][j].N,matrix.m_ppElements[i][j].Value);
-//        }
-//    }
 
     iter+=SparseSymmetricMatrix<float>::Solve(matrix,V,
                                               int(pow(matrix.rows,ITERATION_POWER)),
@@ -473,7 +455,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
 
     for(i=sNodes.nodeCount[depth];i<sNodes.nodeCount[depth+1];++i){
         sNodes.treeNodes[i]->nodeData.value = float(Solution[i-sNodes.nodeCount[depth]]);
-//        printf("Solution:%f\n",sNodes.treeNodes[i]->nodeData.value);
     }
 
     float myRadius,myRadius1,myRadius2;
@@ -652,12 +633,10 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
                                                         depth,&asf);
         }
 
-
         /**     Author: Get the associated vector   */
         SubValues.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j){
             SubValues[j]=Values[asf.adjacencies[j]-sNodes.nodeCount[depth]];
-//            printf("Value:%f\n",SubValues[j]);
         }
         SubSolution.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j) {
@@ -674,16 +653,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
         iter+=SparseSymmetricMatrix<float>::Solve(matrix,SubValues,
                                                   int(pow(matrix.rows,ITERATION_POWER)),
                                                   SubSolution,double(EPSILON),0);
-
-//        for(j=0;j<matrix.rows;++j){
-//            for(int k=0;k<matrix.rowSizes[j];++k){
-//                printf("%d,%d:%f\n",j,matrix.m_ppElements[j][k].N,matrix.m_ppElements[j][k].Value);
-//            }
-//        }
-//
-//        for(j=0;j<asf.adjacencyCount;++j) {
-//            printf("Solution:%f\n",SubSolution[j]);
-//        }
 
         LaplacianProjectionFunction lpf;
         lpf.ot=this;
@@ -795,7 +764,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
                 }
             }
         }
-
         delete [] asf.adjacencies;
     }
     return iter;
@@ -857,10 +825,6 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
             /**     assign the corner value of a leaf node with depth >= subdivisionDepth   */
             for(j=0;j<Cube::CORNERS;++j){
                 key=VertexData::CornerIndex(temp,j,fData.depth,cf.index);
-//                for(int k=0;k<3;++k){
-//                    printf("%d ",cf.index[k]);
-//                }
-//                printf("\n%lld\n",key);
                 if(values.find(key)!=values.end())
                     cornerValues[j]=values[key];
                 else{
@@ -869,7 +833,6 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
                         position.coords[k]=BinaryNode<float>::CornerIndexPosition(cf.index[k],fData.depth+1);
                     OctNode::ProcessPointAdjacentNodes(position,&tree,radius,&cf);
                     values[key]=cf.value;
-//                    printf("%f\n",cf.value);
                     cornerValues[j]=cf.value;
                 }
             }
@@ -879,7 +842,6 @@ void Octree<Degree>::SetIsoSurfaceCorners(const float& isoValue,const int& subdi
                        cornerValues,
                        sizeof(float) * Cube::CORNERS);
             }
-//            printf("%d\n",temp->depth());
             temp=sNodes->treeNodes[i]->nextLeaf(temp);
         }
         values.clear();
@@ -1366,7 +1328,6 @@ int Octree<Degree>::SetMCFaceCurve(OctNode* node,
             else if(!subNode->nodeData.isoNode)     return 0;
 
             curve.push_back(pIndex);
-//            printf("%d\n",pIndex);
             eCount=subNode->nodeData.isoNode->edgeCount(fIndex);
             for(int i=0;i<eCount;++i){
                 for(int j=0;j<2;++j){
@@ -2015,7 +1976,6 @@ int Octree<Degree>::NonLinearSplatOrientedPoint(OctNode* node, const Point3D<flo
                     (*normals)[idx].coords[0]+=float(normal.coords[0]*dxdydz);
                     (*normals)[idx].coords[1]+=float(normal.coords[1]*dxdydz);
                     (*normals)[idx].coords[2]+=float(normal.coords[2]*dxdydz);
-//                    printf("%lf\n",float(normal.coords[0]*dxdydz));
                 }
             }
         }
@@ -2378,7 +2338,6 @@ void Octree<Degree>::finalize1(const int& refineNeighbors) {
             }
             temp=tree.nextNode(temp);
         }
-//        printf("!%d\n",rf.cnt);
     }
 }
 
@@ -2506,13 +2465,11 @@ float Octree<Degree>::GetIsoValue(void){
             /**     For those nodes that is close to center enough,
              *      sum up (x * Fo) = (x * Fo,x * Fo,y * Fo,z)          */
             OctNode::ProcessPointAdjacentNodes(center,&tree,myRadius,&cf);
-//            printf("%f %f\n",cf.value,w);
             isoValue+=cf.value*w;
             weightSum+=w;
         }
         temp=tree.nextNode(temp);
     }
-//    printf("cnt:%d\n",cf.cnt);
     return isoValue/weightSum;
 }
 
@@ -2531,27 +2488,11 @@ void Octree<Degree>::GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh
 
     fData.setValueTables(fData.VALUE_FLAG | fData.D_VALUE_FLAG,postNormalSmooth);
 
-//    SortedTreeNodes s;
-//    s.set(tree,0);
-//    for(int i=0;i<s.nodeCount[s.maxDepth];++i){
-//        if(s.treeNodes[i]->nodeData.isoNode->cornerValues) {
-//            for (int j = 0; j < 8; ++j) {
-//                printf("%f ", s.treeNodes[i]->nodeData.isoNode->cornerValues[j]);
-//            }
-//            printf("\n");
-//        }
-//    }
-
-
     temp = tree.nextLeaf();
     while(temp){
         SetMCRootPositions(temp,0,isoValue,roots,NULL,*normalHash,NULL,NULL,mesh,1);
         temp=tree.nextLeaf(temp);
     }
-
-//    for(auto i:mesh->inCorePoints){
-//        printf("%f %f %f\n",i.coords[0],i.coords[1],i.coords[2]);
-//    }
 
     fData.clearValueTables();
     delete normalHash;
@@ -2567,15 +2508,6 @@ void Octree<Degree>::GetMCIsoTriangles(const float& isoValue,CoredMeshData* mesh
     }
 
     sLeaves.set(tree);
-
-//    for(int i=0;i<sLeaves.leafCount;++i){
-//        if(sLeaves.treeLeaves[i]->nodeData.isoNode->cornerValues) {
-//            for (int j = 0; j < 8; ++j) {
-//                printf("%f ", sLeaves.treeLeaves[i]->nodeData.isoNode->cornerValues[j]);
-//            }
-//            printf("\n");
-//        }
-//    }
 
     for(int i=0;i<sLeaves.leafCount;++i){
         GetMCIsoTriangles(sLeaves.treeLeaves[i],mesh,roots,NULL,NULL,0,0);

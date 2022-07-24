@@ -273,31 +273,31 @@ int Octree<Degree>::RestrictedLaplacianMatrixFunction::Function(const OctNode* n
     if(d<0) return 0;
 
     if(!dDepth){
-        if(!d){
-            d=off2[1]-off1[1];
-            if(d<0) return 0;
-            if(!d){
-                d=off2[2]-off1[2];
-                if(d<0) return 0;
+        if(!d) {
+            d = off2[1] - off1[1];
+            if (d < 0) return 0;
+            if (!d) {
+                d = off2[2] - off1[2];
+                if (d < 0) return 0;
             }
-
-            if(!OctNode::Overlap2(depth,offset,0.5,
-                                  d1,off1,radius))
-                return 0;
-
-            for(int i=0;i<3;++i){
-                scratch[i]=index[i]+BinaryNode<float>::Index(d1,off1[i]);
-            }
-            float temp=ot->GetLaplacian(scratch);
-            if(node1==node2) temp/=2;
-
-            if(fabs(temp)>EPSILON){
-                rowElements[elementCount].Value=temp;
-                rowElements[elementCount].N=node1->nodeData.nodeIndex;
-                elementCount++;
-            }
-            return 0;
         }
+
+        if(!OctNode::Overlap2(depth,offset,0.5,
+                              d1,off1,radius))
+            return 0;
+
+        for(int i=0;i<3;++i){
+            scratch[i]=index[i]+BinaryNode<float>::Index(d1,off1[i]);
+        }
+        float temp=ot->GetLaplacian(scratch);
+        if(node1==node2) temp/=2;
+
+        if(fabs(temp)>EPSILON){
+            rowElements[elementCount].Value=temp;
+            rowElements[elementCount].N=node1->nodeData.nodeIndex;
+            elementCount++;
+        }
+        return 0;
     }
     return 1;
 }
@@ -583,8 +583,6 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const SortedTreeNode
 
 template<int Degree>
 int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingDepth, const SortedTreeNodes& sNodes){
-    if(startingDepth>=depth)
-        return SolveFixedDepthMatrix(depth,sNodes);
 
     int i,j,d,iter=0;
     SparseSymmetricMatrix<float> matrix;
@@ -592,6 +590,9 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
     AdjacencyCountFunction acf;
     Vector<float> Values;
     Vector<double> SubValues,SubSolution;
+
+    if(startingDepth>=depth)
+        return SolveFixedDepthMatrix(depth,sNodes);
 
     Values.Resize(sNodes.nodeCount[depth+1]-sNodes.nodeCount[depth]);
 
@@ -606,59 +607,57 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
     myRadius=int(myRadius-ROUND_EPS)+ROUND_EPS; //2.0001
     myRadius2=float(radius+ROUND_EPS-0.5);  //1.0001
 
-    int idx1,idx2;
     /**     start from depth-startingDepth  */
     d=depth-startingDepth;
     for(i=sNodes.nodeCount[d];i<sNodes.nodeCount[d+1];++i) {
-        idx1=i;
         OctNode* temp;
         /**     Author: Get all of the entries associated to the subspace   */
         acf.adjacencyCount=0;
-        temp=sNodes.treeNodes[idx1]->nextNode();
+        temp=sNodes.treeNodes[i]->nextNode();
         /**     Count the sub-node at $depth in the sub-tree of node1 */
         while(temp) {
             if (temp->depth() == depth) {
                 acf.Function(temp, temp);
-                temp = sNodes.treeNodes[idx1]->nextBranch(temp);
+                temp = sNodes.treeNodes[i]->nextBranch(temp);
             } else {
-                temp = sNodes.treeNodes[idx1]->nextNode(temp);
+                temp = sNodes.treeNodes[i]->nextNode(temp);
             }
         }
         for(j=sNodes.nodeCount[d];j<sNodes.nodeCount[d+1];++j){
-            idx2=j;
-            if(idx1==idx2) continue;
+            if(i==j) continue;
             /**     Count how many sub-nodes at $depth in the sub-tree of node2 is close to node1  */
-            OctNode::ProcessFixedDepthNodeAdjacentNodes(sNodes.treeNodes[idx1],float(0.5),
-                                                        sNodes.treeNodes[idx2],myRadius,
+            OctNode::ProcessFixedDepthNodeAdjacentNodes(sNodes.treeNodes[i],float(0.5),
+                                                        sNodes.treeNodes[j],myRadius,
                                                         depth,&acf);
         }
         if(!acf.adjacencyCount) continue;
         asf.adjacencies=new int[acf.adjacencyCount];
         asf.adjacencyCount=0;
 
-        temp=sNodes.treeNodes[idx1]->nextNode();
+        temp=sNodes.treeNodes[i]->nextNode();
         /**     Record the global index of the nodes in sub-tree of node1 at $depth  */
         while(temp) {
             if (temp->depth() == depth) {
                 asf.Function(temp,temp);
-                temp = sNodes.treeNodes[idx1]->nextBranch(temp);
+                temp = sNodes.treeNodes[i]->nextBranch(temp);
             } else {
-                temp = sNodes.treeNodes[idx1]->nextNode(temp);
+                temp = sNodes.treeNodes[i]->nextNode(temp);
             }
         }
 
         for(j=sNodes.nodeCount[d];j<sNodes.nodeCount[d+1];++j){
-            idx2=j;
-            if(idx1==idx2) continue;
-            OctNode::ProcessFixedDepthNodeAdjacentNodes(sNodes.treeNodes[idx1],float(0.5),
-                                                        sNodes.treeNodes[idx2],myRadius,
+            if(i==j) continue;
+            OctNode::ProcessFixedDepthNodeAdjacentNodes(sNodes.treeNodes[i],float(0.5),
+                                                        sNodes.treeNodes[j],myRadius,
                                                         depth,&asf);
         }
+
 
         /**     Author: Get the associated vector   */
         SubValues.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j){
             SubValues[j]=Values[asf.adjacencies[j]-sNodes.nodeCount[depth]];
+//            printf("Value:%f\n",SubValues[j]);
         }
         SubSolution.Resize(asf.adjacencyCount);
         for(j=0;j<asf.adjacencyCount;++j) {
@@ -676,6 +675,16 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
                                                   int(pow(matrix.rows,ITERATION_POWER)),
                                                   SubSolution,double(EPSILON),0);
 
+//        for(j=0;j<matrix.rows;++j){
+//            for(int k=0;k<matrix.rowSizes[j];++k){
+//                printf("%d,%d:%f\n",j,matrix.m_ppElements[j][k].N,matrix.m_ppElements[j][k].Value);
+//            }
+//        }
+//
+//        for(j=0;j<asf.adjacencyCount;++j) {
+//            printf("Solution:%f\n",SubSolution[j]);
+//        }
+
         LaplacianProjectionFunction lpf;
         lpf.ot=this;
 
@@ -686,8 +695,7 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
              *      depth > depth - startingDepth    */
             while(temp->depth() > sNodes.treeNodes[i]->depth())
                 temp=temp->parent;
-            idx2=temp->nodeData.nodeIndex;
-            if(idx2 >= sNodes.treeNodes[i]->nodeData.nodeIndex) // = idx1 ?
+            if(temp->nodeData.nodeIndex>=sNodes.treeNodes[i]->nodeData.nodeIndex)
                 /**     Solution saved in nodeData.value    */
                 sNodes.treeNodes[asf.adjacencies[j]]->nodeData.value=float(SubSolution[j]);
         }
@@ -698,6 +706,7 @@ int Octree<Degree>::SolveFixedDepthMatrix(const int& depth, const int& startingD
         float sRadius=radius/(1<<depth);
         /**     leaf don't update next depth    */
         if(depth < sNodes.maxDepth-1){
+            int idx1,idx2;
             OctNode* node1,* node2;
             /**     use asf.adjacencies to transform the local index to global index    */
             for(j=0;j<matrix.rows;++j){

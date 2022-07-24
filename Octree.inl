@@ -194,35 +194,35 @@ void OctNode::__ProcessFixedDepthNodeAdjacentNodes(const float& dx, const float&
             if(o&128)   F->Function(&node2->children[7],node1);
         } else{
             if(o&  1) if(node2->children[0].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx1,dy1,dz1,node1,radius1,
                                                        &node2->children[0],radius,cWidth,
                                                        depth,F);
             if(o&  2) if(node2->children[1].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy1,dz1,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx2,dy1,dz1,node1,radius1,
                                                        &node2->children[1],radius,cWidth,
                                                        depth,F);
             if(o&  4) if(node2->children[2].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy2,dz1,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx1,dy2,dz1,node1,radius1,
                                                        &node2->children[2],radius,cWidth,
                                                        depth,F);
             if(o&  8) if(node2->children[3].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy2,dz1,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx2,dy2,dz1,node1,radius1,
                                                        &node2->children[3],radius,cWidth,
                                                        depth,F);
             if(o& 16) if(node2->children[4].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy1,dz2,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx1,dy1,dz2,node1,radius1,
                                                        &node2->children[4],radius,cWidth,
                                                        depth,F);
             if(o& 32) if(node2->children[5].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy1,dz2,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx2,dy1,dz2,node1,radius1,
                                                        &node2->children[5],radius,cWidth,
                                                        depth,F);
             if(o& 64) if(node2->children[6].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx1,dy2,dz2,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx1,dy2,dz2,node1,radius1,
                                                        &node2->children[6],radius,cWidth,
                                                        depth,F);
             if(o&128) if(node2->children[7].children)
-                    __ProcessMaxDepthNodeAdjacentNodes(dx2,dy2,dz2,node1,radius1,
+                    __ProcessFixedDepthNodeAdjacentNodes(dx2,dy2,dz2,node1,radius1,
                                                        &node2->children[7],radius,cWidth,
                                                        depth,F);
         }

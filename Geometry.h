@@ -32,7 +32,11 @@ DAMAGE.
 #include <vector>
 
 template<class Real>
-struct Point3D{Real coords[3];};
+struct Point3D{
+    Real coords[3];
+    inline       Real& operator[] ( int i )       { return coords[i]; }
+    inline const Real& operator[] ( int i ) const { return coords[i]; }
+};
 
 template<class Real>
 double Length(const Point3D<Real>& p);

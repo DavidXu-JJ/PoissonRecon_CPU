@@ -2110,7 +2110,6 @@ void Octree<Degree>::setFunctionData(const PPolynomial<Degree>& ReconstructionFu
 template<int Degree>
 int Octree<Degree>::setTree(char* fileName,
                             const int& maxDepth,
-                            const int& binary,
                             const int& kernelDepth,
                             const float& samplesPerNode,
                             const float& scaleFactor,
@@ -2122,30 +2121,25 @@ int Octree<Degree>::setTree(char* fileName,
     Point3D<float> min,max,position,normal,myCenter;
     float myWidth;
     int i,cnt=0;
-    float c[2*DIMENSION];
     OctNode* temp;
     int splatDepth=0;
 
     NodeData::UseIndex=1;
     neighborKey.set(maxDepth);
     splatDepth=std::max(splatDepth,kernelDepth);
-    if(binary) fp=fopen(fileName,"rb");
-    else fp=fopen(fileName,"r");
-    if(!fp) return 0;
 
+    PointStream<float>* pointStream;
+    char* ext = GetFileExtension(fileName);
+    if      (!strcasecmp(ext,"bnpts"))      pointStream = new BinaryPointStream<float>(fileName);
+    else if (!strcasecmp(ext,"ply"))        pointStream = new PLYPointStream<float>(fileName);
+    else                                    pointStream = new ASCIIPointStream<float>(fileName);
 
     /**     Get the min and max in each dimension   */
-    while(1){
-        if(binary){
-            if(fread(c,sizeof(float),2*DIMENSION,fp)!=2*DIMENSION)
-                break;
-        } else{
-            if(fscanf(fp," %f %f %f %f %f %f ",&c[0],&c[1],&c[2],&c[3],&c[4],&c[5])!=2*DIMENSION)
-                break;
-        }
+    Point3D<float> p,n;
+    while(pointStream->nextPoint(p,n)){
         for(i=0;i<DIMENSION;++i){
-            if(!cnt || c[i]<min.coords[i]) min.coords[i]=c[i];
-            if(!cnt || c[i]>max.coords[i]) max.coords[i]=c[i];
+            if(!cnt || p.coords[i]<min.coords[i]) min.coords[i]=p.coords[i];
+            if(!cnt || p.coords[i]>max.coords[i]) max.coords[i]=p.coords[i];
         }
         ++cnt;
     }
@@ -2163,19 +2157,12 @@ int Octree<Degree>::setTree(char* fileName,
     /**     Initialize weight contribution of the node in this tree     */
     if(splatDepth>0){
         /**     set position indicator  */
-        fseek(fp,0,SEEK_SET);
         cnt=0;
-        while(1){
-            if(binary){
-                if(fread(c,sizeof(float),2*DIMENSION,fp)!=2*DIMENSION)
-                    break;
-            }else{
-                if(fscanf(fp," %f %f %f %f %f %f ",&c[0],&c[1],&c[2],&c[3],&c[4],&c[5])!=2*DIMENSION)
-                    break;
-            }
+        pointStream->reset();
+        while(pointStream->nextPoint(position,normal)){
             /**     project point to [0,1]^3    */
             for(i=0;i<DIMENSION;++i)
-                position.coords[i]=(c[i]-center.coords[i])/scale;
+                position.coords[i]=(position.coords[i]-center.coords[i])/scale;
 
             /**     center at (0.5, 0.5, 0.5)   */
             myCenter.coords[0]=myCenter.coords[1]=myCenter.coords[2]=float(0.5);
@@ -2213,21 +2200,13 @@ int Octree<Degree>::setTree(char* fileName,
     }
 
     normals=new std::vector<Point3D<float> >();
-    fseek(fp,0,SEEK_SET);
     cnt=0;
 
     /**     Update normals in each related node */
-    while(1){
-        if(binary){
-            if(fread(c,sizeof(float),2*DIMENSION,fp)!=2*DIMENSION)
-                break;
-        }else{
-            if(fscanf(fp," %f %f %f %f %f %f ",&c[0],&c[1],&c[2],&c[3],&c[4],&c[5])!=2*DIMENSION)
-                break;
-        }
+    pointStream->reset();
+    while(pointStream->nextPoint(position,normal)){
         for(i=0;i<DIMENSION;++i){
-            position.coords[i]=(c[i]-center.coords[i])/scale;
-            normal.coords[i]=c[DIMENSION+i];
+            position.coords[i]=(position.coords[i]-center.coords[i])/scale;
         }
         myCenter.coords[0]=myCenter.coords[1]=myCenter.coords[2]=float(0.5);
         myWidth=float(1.0);
@@ -2294,7 +2273,6 @@ int Octree<Degree>::setTree(char* fileName,
             NonLinearSplatOrientedPoint(temp,position,normal);
         }
     }
-    fclose(fp);
     return cnt;
 }
 

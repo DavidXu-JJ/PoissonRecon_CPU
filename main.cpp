@@ -23,12 +23,11 @@ int main(int argc,char* argv[])
 
     tree.setFunctionData(ReconstructionFunction,10,0,float(1.0)/(1<<depth));
 
-    tree.setTree(fileName,depth,0,kernelDepth,1.0,1.25,center,scale,1);
+    tree.setTree(fileName,depth,kernelDepth,1.0,1.25,center,scale,1);
 
     SortedTreeNodes s;
 
     tree.ClipTree();
-
 
     tree.finalize1(3);
 

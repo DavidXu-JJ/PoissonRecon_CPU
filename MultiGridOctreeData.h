@@ -8,6 +8,8 @@
 #include "FunctionData.h"
 #include "SparseMatrix.h"
 #include <unordered_map>
+#include "PointStream.h"
+#include "CmdLineParser.h"
 using std::unordered_map;
 
 class VertexData {
@@ -301,7 +303,6 @@ public:
      *      to update this->normals of the node at kernelDepth.     */
     int setTree(char* fileName,
                 const int& maxDepth,
-                const int& binary,
                 const int& kernelDepth,
                 const float& samplesPerNode,
                 const float& scaleFactor,

@@ -218,4 +218,11 @@ extern int equal_strings(char *, char *);
 #ifdef __cplusplus
 }
 #endif
+
+#include "Geometry.h"
+#include <vector>
+
+int PlyWriteTriangles(char* fileName,CoredMeshData* mesh,int file_type,const Point3D<float>& translate,const float& scale,char** comments=NULL,const int& commentNum=0);
+int PlyDefaultFileType(void);
+
 #endif // PLY_FILE_INCLUDED

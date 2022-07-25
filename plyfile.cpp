@@ -2724,4 +2724,114 @@ Read an element from a binary file.
 	  
 	  return (ptr);
   }
-  
+
+int PlyDefaultFileType(void){return PLY_ASCII;}
+
+//
+// PLY data structures
+//
+char *elem_names[] = { "vertex", "face" };
+
+typedef struct PlyVertex {
+    float x, y, z;
+} PlyVertex;
+
+typedef struct oldPlyOrientedVertex {
+    float x, y, z , nx, ny, nz;
+} oldPlyOrientedVertex;
+
+typedef struct PlyFace {
+    unsigned char nr_vertices;
+    int *vertices;
+    int segment;
+} PlyFace;
+
+static PlyProperty vert_props[] = {
+        {"x", PLY_FLOAT, PLY_FLOAT, offsetof(PlyVertex,x), 0, 0, 0, 0},
+        {"y", PLY_FLOAT, PLY_FLOAT, offsetof(PlyVertex,y), 0, 0, 0, 0},
+        {"z", PLY_FLOAT, PLY_FLOAT, offsetof(PlyVertex,z), 0, 0, 0, 0}
+};
+static PlyProperty oriented_vert_props[] = {
+        {"x",  PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,x ), 0, 0, 0, 0},
+        {"y",  PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,y ), 0, 0, 0, 0},
+        {"z",  PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,z ), 0, 0, 0, 0},
+        {"nx", PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,nx), 0, 0, 0, 0},
+        {"ny", PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,ny), 0, 0, 0, 0},
+        {"nz", PLY_FLOAT, PLY_FLOAT, offsetof(oldPlyOrientedVertex,nz), 0, 0, 0, 0}
+};
+
+// List of property information for a vertex
+static PlyProperty face_props[] = {
+        {"vertex_indices", PLY_INT, PLY_INT, offsetof(PlyFace,vertices),
+         1, PLY_UCHAR, PLY_UCHAR, offsetof(PlyFace,nr_vertices)},
+};
+
+int PlyWriteTriangles(char* fileName,CoredMeshData* mesh,int file_type,const Point3D<float>& translate,const float& scale,char** comments,const int& commentNum){
+    int i;
+    int nr_vertices=int(mesh->outOfCorePointCount()+mesh->inCorePoints.size());
+    int nr_faces=mesh->triangleCount();
+    float version;
+    PlyFile *ply = ply_open_for_writing(fileName, 2, elem_names, file_type, &version);
+    if (!ply){return 0;}
+
+    mesh->resetIterator();
+
+    //
+    // describe vertex and face properties
+    //
+    ply_element_count(ply, "vertex", nr_vertices);
+    ply_describe_property(ply, "vertex", &vert_props[0]);
+    ply_describe_property(ply, "vertex", &vert_props[1]);
+    ply_describe_property(ply, "vertex", &vert_props[2]);
+
+    ply_element_count(ply, "face", nr_faces);
+    ply_describe_property(ply, "face", &face_props[0]);
+
+    // Write in the comments
+    for(i=0;i<commentNum;i++){ply_put_comment(ply,comments[i]);}
+
+    ply_header_complete(ply);
+
+    // write vertices
+    ply_put_element_setup(ply, "vertex");
+    Point3D<float> p;
+    for (i=0; i < int(mesh->inCorePoints.size()); i++){
+        PlyVertex ply_vertex;
+        p=mesh->inCorePoints[i];
+        ply_vertex.x = p.coords[0]*scale+translate.coords[0];
+        ply_vertex.y = p.coords[1]*scale+translate.coords[1];
+        ply_vertex.z = p.coords[2]*scale+translate.coords[2];
+        ply_put_element(ply, (void *) &ply_vertex);
+    }
+    for (i=0; i < mesh->outOfCorePointCount(); i++){
+        PlyVertex ply_vertex;
+        mesh->nextOutOfCorePoint(p);
+        ply_vertex.x = p.coords[0]*scale+translate.coords[0];
+        ply_vertex.y = p.coords[1]*scale+translate.coords[1];
+        ply_vertex.z = p.coords[2]*scale+translate.coords[2];
+        ply_put_element(ply, (void *) &ply_vertex);
+    }  // for, write vertices
+
+    // write faces
+    TriangleIndex tIndex;
+    int inCoreFlag;
+    ply_put_element_setup(ply, "face");
+    for (i=0; i < nr_faces; i++){
+        //
+        // create and fill a struct that the ply code can handle
+        //
+        PlyFace ply_face;
+        ply_face.nr_vertices = 3;
+        ply_face.vertices = new int[3];
+        mesh->nextTriangle(tIndex,inCoreFlag);
+        if(!(inCoreFlag & CoredMeshData::IN_CORE_FLAG[0])){tIndex.idx[0]+=int(mesh->inCorePoints.size());}
+        if(!(inCoreFlag & CoredMeshData::IN_CORE_FLAG[1])){tIndex.idx[1]+=int(mesh->inCorePoints.size());}
+        if(!(inCoreFlag & CoredMeshData::IN_CORE_FLAG[2])){tIndex.idx[2]+=int(mesh->inCorePoints.size());}
+        for(int j=0; j < 3; j++){ply_face.vertices[j] = tIndex.idx[j];}
+        ply_put_element(ply, (void *) &ply_face);
+        delete[] ply_face.vertices;
+    }  // for, write faces
+
+    ply_close(ply);
+    return 1;
+}

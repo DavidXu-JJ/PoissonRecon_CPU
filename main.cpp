@@ -2,7 +2,7 @@
 #include "Geometry.h"
 #include "Octree.h"
 #include <cmath>
-#include "ply.h"
+#include "PlyFile.h"
 #include "MultiGridOctreeData.h"
 
 
